@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">CustomTelinkApp</string>
+    <string-array name="group_name">
+        <item>Living room</item>
+        <item>Kitchen</item>
+        <item>Master bedroom</item>
+        <item>Secondary bedroom</item>
+        <item>Balcony</item>
+        <item>Bathroom</item>
+        <item>Hallway</item>
+        <item>others</item>
+    </string-array>
+</resources>
