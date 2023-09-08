@@ -347,9 +347,12 @@ public class NetworkingController {
     }
 
     private int getSegmentAccessLength(int dstAddress, int opcode) {
+        MeshLogger.i(String.valueOf(dstAddress));
+        MeshLogger.i(String.valueOf(opcode));
         if (dstAddress == directAddress && opcode == Opcode.BLOB_CHUNK_TRANSFER.value) {
             return UNSEGMENTED_ACCESS_PAYLOAD_MAX_LENGTH_LONG;
         }
+        MeshLogger.i(String.valueOf(extendBearerMode));
         switch (extendBearerMode) {
             case NONE:
                 return UNSEGMENTED_ACCESS_PAYLOAD_MAX_LENGTH_DEFAULT;
@@ -479,17 +482,21 @@ public class NetworkingController {
     public boolean sendMeshMessage(MeshMessage meshMessage) {
 
         int dst = meshMessage.getDestinationAddress();
+        MeshLogger.i(String.valueOf(dst));
         if (!validateDestinationAddress(dst)) {
             log("invalid dst address: " + String.format("%04X", dst), MeshLogger.LEVEL_WARN);
             return false;
         }
 
         AccessType accessType = meshMessage.getAccessType();
+        MeshLogger.i(String.valueOf(accessType));
         byte[] encryptionKey;
         if (accessType == AccessType.APPLICATION) {
             encryptionKey = getAppKey(meshMessage.getAppKeyIndex());
+            MeshLogger.i(String.valueOf(encryptionKey));
         } else {
             encryptionKey = getDeviceKey(meshMessage.getDestinationAddress());
+            MeshLogger.i("else" + java.util.Arrays.toString(encryptionKey));
         }
 
         if (encryptionKey == null) {

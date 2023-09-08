@@ -23,6 +23,7 @@
 package com.telink.ble.mesh.foundation;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.telink.ble.mesh.foundation.event.MeshEvent;
 import com.telink.ble.mesh.foundation.event.NetworkInfoUpdateEvent;

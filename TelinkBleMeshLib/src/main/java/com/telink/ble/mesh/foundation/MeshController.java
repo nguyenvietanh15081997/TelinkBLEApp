@@ -883,6 +883,7 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
                 + " retryCnt: " + meshMessage.getRetryCnt()
                 + " rspMax: " + meshMessage.getResponseMax());
         final boolean sent = mNetworkingController.sendMeshMessage(meshMessage);
+        MeshLogger.i(String.valueOf(sent));
         if (meshMessage.isReliable()) {
             if (sent) {
                 // sent
@@ -1027,6 +1028,8 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
                         if (netKeyIndex == -1) {
                             netKeyIndex = meshConfiguration.netKeyIndex;
                         }
+                        MeshLogger.i(String.valueOf(netKeyIndex));
+                        MeshLogger.i(String.valueOf(meshConfiguration.appKeyMap.get(bindingDevice.getAppKeyIndex())));
                         mBindingController.begin(netKeyIndex,
                                 meshConfiguration.appKeyMap.get(bindingDevice.getAppKeyIndex()), bindingDevice);
                     }

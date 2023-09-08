@@ -2,6 +2,7 @@ package com.example.customtelinkapp;
 
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 
 import com.example.customtelinkapp.model.AppSettings;
 import com.example.customtelinkapp.model.MeshInfo;
@@ -38,6 +39,7 @@ public class TelinkMeshApplication extends MeshApplication {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.i(TAG, "onCreate: ");
         mThis = this;
         HandlerThread offlineCheckThread = new HandlerThread("offline check thread");
         offlineCheckThread.start();
@@ -48,15 +50,6 @@ public class TelinkMeshApplication extends MeshApplication {
 //        AppCrashHandler.init(this);
 //        closePErrorDialog();
     }
-//    @Override
-//    protected void onNetworkInfoUpdate(NetworkInfoUpdateEvent networkInfoUpdateEvent) {
-//
-//    }
-
-//    @Override
-//    protected void onStatusNotificationEvent(StatusNotificationEvent statusNotificationEvent) {
-//
-//    }
 
     @Override
     protected void onOnlineStatusEvent(OnlineStatusEvent onlineStatusEvent) {
