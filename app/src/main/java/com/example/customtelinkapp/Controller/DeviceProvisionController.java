@@ -217,6 +217,7 @@ public class DeviceProvisionController {
     }
     public void onKeyBindSuccess(BindingEvent event) {
         BindingDevice remote = event.getBindingDevice();
+        MeshLogger.i(String.valueOf(remote.getCompositionData().pid));
         NetworkingDevice pvDevice = getCurrentDevice(NetworkingState.BINDING);
         if (pvDevice == null) {
             MeshLogger.d("pv device not found when bind success");
@@ -233,9 +234,6 @@ public class DeviceProvisionController {
         // no need to set time publish
         pvDevice.state = NetworkingState.BIND_SUCCESS;
         provisionNext();
-        MainActivity mainActivity = new MainActivity();
-
-        mainActivity.sendTypeAsk(remote);
     }
 
     /**

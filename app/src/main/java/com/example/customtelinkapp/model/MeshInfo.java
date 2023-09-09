@@ -360,27 +360,20 @@ public class MeshInfo implements Serializable, Cloneable {
         meshConfiguration.sequenceNumber = sequenceNumber;
 
         meshConfiguration.localAddress = localAddress;
-
-        Log.i("TAG", "MESHCONFIG appkeymap: " + meshConfiguration.appKeyMap);
-        Log.i("TAG", "MESHCONFIG networkkey: " + meshConfiguration.networkKey);
-        Log.i("TAG", "MESHCONFIG netkeyindex: " + meshConfiguration.netKeyIndex);
-        Log.i("TAG", "MESHCONFIG devkeymap: " + meshConfiguration.deviceKeyMap);
-        Log.i("TAG", "MESHCONFIG localadr: " + meshConfiguration.localAddress);
-        Log.i("TAG", "MESHCONFIG sequencenumber: " + meshConfiguration.sequenceNumber);
         return meshConfiguration;
     }
 
 
-    public static MeshInfo createNewMesh(Context context) {
+    public static MeshInfo createNewMesh(Context context, String appKey, String netKey, int ivIndex) {
         // 0x7FFF
         final int DEFAULT_LOCAL_ADDRESS = 0x0001;
         MeshInfo meshInfo = new MeshInfo();
 
-        // for test
-//        final byte[] NET_KEY = Arrays.hexToBytes("26E8D2DBD4363AF398FEDE049BAD0086");
+        // for test -- Viet reuse it
+        final byte[] NET_KEY = Arrays.hexToBytes(netKey);
 
-        // for test
-//        final byte[] APP_KEY = Arrays.hexToBytes("7759F48730A4F1B2259B1B0681BE7C01");
+        // for test -- Viet reuse it
+        final byte[] APP_KEY = Arrays.hexToBytes(appKey);
 
 //        final int IV_INDEX = 0x20345678;
 
@@ -389,14 +382,16 @@ public class MeshInfo implements Serializable, Cloneable {
         final int KEY_COUNT = 3;
         final String[] NET_KEY_NAMES = {"Default Net Key", "Sub Net Key 1", "Sub Net Key 2"};
         final String[] APP_KEY_NAMES = {"Default App Key", "Sub App Key 1", "Sub App Key 2"};
-        final byte[] APP_KEY_VAL = MeshUtils.generateRandom(16);
+//        final byte[] APP_KEY_VAL = MeshUtils.generateRandom(16);
         for (int i = 0; i < KEY_COUNT; i++) {
-            meshInfo.meshNetKeyList.add(new MeshNetKey(NET_KEY_NAMES[i], i, MeshUtils.generateRandom(16)));
+            meshInfo.meshNetKeyList.add(new MeshNetKey(NET_KEY_NAMES[i], i, NET_KEY));
             meshInfo.appKeyList.add(new MeshAppKey(APP_KEY_NAMES[i],
-                    i, APP_KEY_VAL, i));
+                    i, APP_KEY, i));
         }
 
-        meshInfo.ivIndex = 0;
+//        meshInfo.ivIndex = 0;
+        meshInfo.ivIndex = ivIndex;
+
         meshInfo.sequenceNumber = 0;
         meshInfo.nodes = new ArrayList<>();
         meshInfo.localAddress = DEFAULT_LOCAL_ADDRESS;

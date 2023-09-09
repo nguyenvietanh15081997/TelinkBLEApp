@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
+import com.example.customtelinkapp.Service.MqttService;
 import com.example.customtelinkapp.model.AppSettings;
 import com.example.customtelinkapp.model.MeshInfo;
 import com.example.customtelinkapp.model.NodeInfo;
@@ -30,21 +31,23 @@ import com.telink.ble.mesh.util.MeshLogger;
 import java.util.List;
 
 public class TelinkMeshApplication extends MeshApplication {
-    private final String TAG = "Telink-APP";
+    private final String TAG = "TelinkMeshApplication";
     private static TelinkMeshApplication mThis;
 
     private MeshInfo meshInfo;
 
     private Handler mOfflineCheckHandler;
+
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.i(TAG, "onCreate: ");
         mThis = this;
         HandlerThread offlineCheckThread = new HandlerThread("offline check thread");
         offlineCheckThread.start();
         mOfflineCheckHandler = new Handler(offlineCheckThread.getLooper());
-        initMesh();
+        //connect mqtt
+        MqttService.getInstance().connect(getApplicationContext());
+//        initMesh();
 //        MeshLogger.enableRecord(SharedPreferenceHelper.isLogEnable(this));
         MeshLogger.d(meshInfo.toString());
 //        AppCrashHandler.init(this);
@@ -200,16 +203,21 @@ public class TelinkMeshApplication extends MeshApplication {
         }
     }
 
-    private void initMesh() {
-        Object configObj = FileSystem.readAsObject(this, MeshInfo.FILE_NAME);
-        if (configObj == null) {
-            meshInfo = MeshInfo.createNewMesh(this);
-            meshInfo.saveOrUpdate(this);
-        } else {
-            meshInfo = (MeshInfo) configObj;
-        }
-//        meshInfo = createTestMesh();
+    /**
+     * @param appKey: app_key
+     * @param netKey: ney_key
+     * @param ivIndex : iv_index
+     */
+    private void initMesh(String appKey, String netKey, int ivIndex) {
+//        Object configObj = FileSystem.readAsObject(this, MeshInfo.FILE_NAME);
+//        if (configObj == null) {
+        meshInfo = MeshInfo.createNewMesh(this, appKey, netKey, ivIndex);
+        meshInfo.saveOrUpdate(this);
+//        } else {
+//            meshInfo = (MeshInfo) configObj;
+//        }
     }
+
     public void setupMesh(MeshInfo mesh) {
         MeshLogger.d("setup mesh info: " + meshInfo.toString());
         this.meshInfo = mesh;
@@ -223,12 +231,15 @@ public class TelinkMeshApplication extends MeshApplication {
     public static TelinkMeshApplication getInstance() {
         return mThis;
     }
+
     public Handler getOfflineCheckHandler() {
         return mOfflineCheckHandler;
     }
+
     private void onNodeInfoStatusChanged(NodeInfo nodeInfo) {
         dispatchEvent(new NodeStatusChangedEvent(this, NodeStatusChangedEvent.EVENT_TYPE_NODE_STATUS_CHANGED, nodeInfo));
     }
+
     protected void onNetworkInfoUpdate(NetworkInfoUpdateEvent networkInfoUpdateEvent) {
         MeshLogger.d(String.format("mesh info update from local sequenceNumber-%06X ivIndex-%08X to sequenceNumber-%06X ivIndex-%08X",
                 meshInfo.sequenceNumber, meshInfo.ivIndex,
