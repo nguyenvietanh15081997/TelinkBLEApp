@@ -364,16 +364,16 @@ public class MeshInfo implements Serializable, Cloneable {
     }
 
 
-    public static MeshInfo createNewMesh(Context context, String appKey, String netKey, int ivIndex) {
+    public static MeshInfo createNewMesh(Context context) {
         // 0x7FFF
         final int DEFAULT_LOCAL_ADDRESS = 0x0001;
         MeshInfo meshInfo = new MeshInfo();
 
-        // for test -- Viet reuse it
-        final byte[] NET_KEY = Arrays.hexToBytes(netKey);
+        // for test
+//        final byte[] NET_KEY = Arrays.hexToBytes("26E8D2DBD4363AF398FEDE049BAD0086");
 
-        // for test -- Viet reuse it
-        final byte[] APP_KEY = Arrays.hexToBytes(appKey);
+        // for test
+//        final byte[] APP_KEY = Arrays.hexToBytes("7759F48730A4F1B2259B1B0681BE7C01");
 
 //        final int IV_INDEX = 0x20345678;
 
@@ -382,16 +382,14 @@ public class MeshInfo implements Serializable, Cloneable {
         final int KEY_COUNT = 3;
         final String[] NET_KEY_NAMES = {"Default Net Key", "Sub Net Key 1", "Sub Net Key 2"};
         final String[] APP_KEY_NAMES = {"Default App Key", "Sub App Key 1", "Sub App Key 2"};
-//        final byte[] APP_KEY_VAL = MeshUtils.generateRandom(16);
+        final byte[] APP_KEY_VAL = MeshUtils.generateRandom(16);
         for (int i = 0; i < KEY_COUNT; i++) {
-            meshInfo.meshNetKeyList.add(new MeshNetKey(NET_KEY_NAMES[i], i, NET_KEY));
+            meshInfo.meshNetKeyList.add(new MeshNetKey(NET_KEY_NAMES[i], i, MeshUtils.generateRandom(16)));
             meshInfo.appKeyList.add(new MeshAppKey(APP_KEY_NAMES[i],
-                    i, APP_KEY, i));
+                    i, APP_KEY_VAL, i));
         }
 
-//        meshInfo.ivIndex = 0;
-        meshInfo.ivIndex = ivIndex;
-
+        meshInfo.ivIndex = 0;
         meshInfo.sequenceNumber = 0;
         meshInfo.nodes = new ArrayList<>();
         meshInfo.localAddress = DEFAULT_LOCAL_ADDRESS;
@@ -416,4 +414,51 @@ public class MeshInfo implements Serializable, Cloneable {
         return meshInfo;
     }
 
+    public static MeshInfo createNewMeshFromMqtt( String appKey, String netKey, int ivIndex) {
+        // 0x7FFF
+        final int DEFAULT_LOCAL_ADDRESS = 0x0001;
+        MeshInfo meshInfo = new MeshInfo();
+
+        final byte[] NET_KEY = Arrays.hexToBytes(netKey);
+
+        final byte[] APP_KEY = Arrays.hexToBytes(appKey);
+
+//        final int IV_INDEX = 0x20345678;
+
+//        meshInfo.networkKey = NET_KEY;
+        meshInfo.meshNetKeyList = new ArrayList<>();
+        final int KEY_COUNT = 3;
+        final String[] NET_KEY_NAMES = {"Default Net Key", "Sub Net Key 1", "Sub Net Key 2"};
+        final String[] APP_KEY_NAMES = {"Default App Key", "Sub App Key 1", "Sub App Key 2"};
+//        final byte[] APP_KEY_VAL = MeshUtils.generateRandom(16);
+        for (int i = 0; i < KEY_COUNT; i++) {
+            meshInfo.meshNetKeyList.add(new MeshNetKey(NET_KEY_NAMES[i], i, NET_KEY));
+            meshInfo.appKeyList.add(new MeshAppKey(APP_KEY_NAMES[i],
+                    i, APP_KEY, i));
+        }
+
+        meshInfo.ivIndex = ivIndex;
+        meshInfo.sequenceNumber = 0;
+        meshInfo.nodes = new ArrayList<>();
+        meshInfo.localAddress = DEFAULT_LOCAL_ADDRESS;
+        meshInfo.provisionIndex = DEFAULT_LOCAL_ADDRESS + 1; // 0x0002
+
+//        meshInfo.provisionerUUID = SharedPreferenceHelper.getLocalUUID(context);
+        meshInfo.provisionerUUID = MeshUtils.byteArrayToUuid((MeshUtils.generateRandom(16)));
+
+        meshInfo.groups = new ArrayList<>();
+        meshInfo.unicastRange = new ArrayList<>();
+        meshInfo.unicastRange.add(new AddressRange(0x01, 0x400));
+        meshInfo.addressTopLimit = 0x0400;
+//        String[] groupNames = context.getResources().getStringArray(R.array.group_name);
+        GroupInfo group;
+        for (int i = 0; i < 8; i++) {
+            group = new GroupInfo();
+            group.address = i | 0xC000;
+            group.name = "groupNames -- " + i;
+            meshInfo.groups.add(group);
+        }
+
+        return meshInfo;
+    }
 }

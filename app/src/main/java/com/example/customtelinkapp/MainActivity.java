@@ -96,6 +96,10 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
         TelinkMeshApplication.getInstance().addEventListener(ScanEvent.EVENT_TYPE_SCAN_TIMEOUT, this);
         TelinkMeshApplication.getInstance().addEventListener(ScanEvent.EVENT_TYPE_DEVICE_FOUND, this);
         TelinkMeshApplication.getInstance().addEventListener(ModelPublicationStatusMessage.class.getName(), this);
+
+        //connect mqtt
+        MqttService.getInstance().connect(getApplicationContext());
+
         mesh = TelinkMeshApplication.getInstance().getMeshInfo();
         startMeshService();
 
@@ -112,16 +116,6 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
             public void onClick(View v) {
                 if(deviceProvisionController.addAll()){
                     deviceProvisionController.provisionNext();
-                }
-            }
-        });
-        btnType.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                for(NetworkingDevice device : deviceProvisionController.devices){
-                    if(device.nodeInfo.macAddress.equalsIgnoreCase("A4:C1:38:37:7B:ED")){
-//                        sendTypeAsk();
-                    }
                 }
             }
         });
@@ -298,13 +292,5 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
             timeSetMessage.setAck(false);
             MeshService.getInstance().sendMeshMessage(timeSetMessage);
         }, 1500);
-    }
-    public void sendTypeAsk (BindingDevice device){
-        MeshMessage meshMessage = new MeshMessage();
-        meshMessage.setDestinationAddress(device.getMeshAddress());
-        meshMessage.setOpcode(OP_VENDOR_GET);
-        meshMessage.setResponseOpcode(OP_VENDOR_STATUS);
-        meshMessage.setParams(new byte[]{3, 0});
-        MeshService.getInstance().sendMeshMessage(meshMessage);
     }
 }

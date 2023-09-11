@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.example.customtelinkapp.MainActivity;
+import com.example.customtelinkapp.Service.MqttService;
 import com.example.customtelinkapp.TelinkMeshApplication;
 import com.example.customtelinkapp.model.AppSettings;
 import com.example.customtelinkapp.model.CertCacheService;
@@ -217,7 +218,6 @@ public class DeviceProvisionController {
     }
     public void onKeyBindSuccess(BindingEvent event) {
         BindingDevice remote = event.getBindingDevice();
-        MeshLogger.i(String.valueOf(remote.getCompositionData().pid));
         NetworkingDevice pvDevice = getCurrentDevice(NetworkingState.BINDING);
         if (pvDevice == null) {
             MeshLogger.d("pv device not found when bind success");
@@ -233,6 +233,11 @@ public class DeviceProvisionController {
 
         // no need to set time publish
         pvDevice.state = NetworkingState.BIND_SUCCESS;
+        // send mqtt device info
+        MeshLogger.i(Arrays.bytesToHexString(pvDevice.nodeInfo.deviceUUID));
+        MeshLogger.i(String.valueOf(pvDevice.nodeInfo.macAddress));
+        MeshLogger.i(java.util.Arrays.toString(pvDevice.nodeInfo.deviceKey));
+        MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(pvDevice.nodeInfo.deviceUUID), pvDevice.nodeInfo.macAddress, Arrays.bytesToHexString(pvDevice.nodeInfo.deviceKey), pvDevice.nodeInfo.compositionData.vid, pvDevice.nodeInfo.compositionData.pid);
         provisionNext();
     }
 
