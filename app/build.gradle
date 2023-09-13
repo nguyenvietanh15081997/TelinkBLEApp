@@ -9,7 +9,7 @@ android {
     defaultConfig {
         applicationId "com.example.customtelinkapp"
         minSdk 21
-        targetSdk 31
+        targetSdk 29
         versionCode 1
         versionName "1.0"
 
@@ -44,4 +44,6 @@ dependencies {
 //    ---mqtt
     implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.1.0'
     implementation 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
+    // Keep other dependencies you have
+    implementation('androidx.work:work-runtime:2.8.1')
 }
