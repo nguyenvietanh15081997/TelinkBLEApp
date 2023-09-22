@@ -1,5 +1,8 @@
 package com.example.customtelinkapp.Service;
 
+import static com.example.customtelinkapp.Util.Converter.convertToHexString;
+import static com.example.customtelinkapp.Util.Converter.convertToUUID;
+
 import android.content.Context;
 import android.util.Log;
 import android.util.SparseArray;
@@ -25,21 +28,21 @@ import org.json.JSONObject;
 public class MqttService {
     public final String TAG = "MqttService";
 //    // mqtt config for test
-    public static final String mqttServerURI = "tcp://broker.emqx.io:1883";
-    public static final String mqttClientId = "client1502@00";
-    public static final String mqttUsername = "RD";
-    public static final String mqttPassword = "1";
-    // mqtt topic
-    public static final String topicSend = "RD_CONTROL";
-    public static final String topicReceive = "RD_STATUS";
-    // mqtt config for real
-//    public static final String mqttServerURI = "tcp://localhost:1883";
-//    public static final String mqttClientId = "android-client";
-//    public static final String mqttUsername = "";
-//    public static final String mqttPassword = "";
+//    public static final String mqttServerURI = "tcp://broker.emqx.io:1883";
+//    public static final String mqttClientId = "client1502@00";
+//    public static final String mqttUsername = "RD";
+//    public static final String mqttPassword = "1";
 //    // mqtt topic
-//    public static final String topicSend = "device/androidBle";
-//    public static final String topicReceive = "HC/androidBle";
+//    public static final String topicSend = "RD_CONTROL";
+//    public static final String topicReceive = "RD_STATUS";
+    // mqtt config for real
+    public static final String mqttServerURI = "tcp://localhost:1883";
+    public static final String mqttClientId = "android-client";
+    public static final String mqttUsername = "RD";
+    public static final String mqttPassword = "";
+    // mqtt topic
+    public static final String topicSend = "device/androidBle";
+    public static final String topicReceive = "HC/androidBle";
     DeviceProvisionController deviceProvisionController = new DeviceProvisionController();
     public static MqttService mThis = new MqttService();
     public static MqttService getInstance(){
@@ -90,12 +93,12 @@ public class MqttService {
             msgRequestBLEInfor.put("cmd", "bleInfo");
             msgRequestBLEInfor.put("rqi", RandomRequestIdGenerator.generateRandomRequestId());
             msgRequestBLEInfor.put("data", new JSONObject());
-            publish("RD_CONTROL", msgRequestBLEInfor.toString());
+            publish(MqttService.topicSend, msgRequestBLEInfor.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
-    public void sendBindedDeviceInfo(String deviceUUID, String macAddress, String deviceKey, int vid, int pid) {
+    public void sendBindedDeviceInfo(String deviceUUID, String macAddress, String deviceKey, int vid, int pid, int meshAdr) {
         JSONObject msgBindedDeviceInfo = new JSONObject();
         try {
             msgBindedDeviceInfo.put("cmd", "newDev");
@@ -109,7 +112,7 @@ public class MqttService {
             // Tạo đối tượng JSONObject con trong mảng device
             JSONObject deviceObject = new JSONObject();
             deviceObject.put("id", convertToUUID(deviceUUID));
-            deviceObject.put("addr", gwAdr);
+            deviceObject.put("addr", meshAdr);
             deviceObject.put("mac", macAddress);
 
             // Tạo đối tượng JSONObject con data trong device
@@ -129,8 +132,8 @@ public class MqttService {
 
             // Thêm đối tượng data vào đối tượng gốc
             msgBindedDeviceInfo.put("data", dataObject);
-
-            publish("RD_CONTROL", msgBindedDeviceInfo.toString());
+            MeshLogger.i(msgBindedDeviceInfo.toString());
+            publish(MqttService.topicSend, msgBindedDeviceInfo.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -165,23 +168,5 @@ public class MqttService {
         deviceProvisionController.startScan();
         jsonMessage.getJSONObject("data").put("code" , 0);
         publish(topicSend, jsonMessage.toString());
-    }
-    public static String convertToHexString(String input) {
-        return input.replace("-", "").toUpperCase();
-    }
-
-    public static String convertToUUID(String input) {
-
-        // Chuyển đổi chuỗi thành chuỗi UUID 8-4-4-12
-
-        return input.substring(0, 8) +
-                "-" +
-                input.substring(8, 12) +
-                "-" +
-                input.substring(12, 16) +
-                "-" +
-                input.substring(16, 20) +
-                "-" +
-                input.substring(20);
     }
 }

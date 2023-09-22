@@ -237,7 +237,7 @@ public class DeviceProvisionController {
         MeshLogger.i(Arrays.bytesToHexString(pvDevice.nodeInfo.deviceUUID));
         MeshLogger.i(String.valueOf(pvDevice.nodeInfo.macAddress));
         MeshLogger.i(java.util.Arrays.toString(pvDevice.nodeInfo.deviceKey));
-        MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(pvDevice.nodeInfo.deviceUUID), pvDevice.nodeInfo.macAddress, Arrays.bytesToHexString(pvDevice.nodeInfo.deviceKey), pvDevice.nodeInfo.compositionData.vid, pvDevice.nodeInfo.compositionData.pid);
+        MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(pvDevice.nodeInfo.deviceUUID), pvDevice.nodeInfo.macAddress, Arrays.bytesToHexString(pvDevice.nodeInfo.deviceKey), pvDevice.nodeInfo.compositionData.vid, pvDevice.nodeInfo.compositionData.pid, pvDevice.nodeInfo.meshAddress);
         provisionNext();
     }
 

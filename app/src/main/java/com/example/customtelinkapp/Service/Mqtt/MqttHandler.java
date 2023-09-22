@@ -3,6 +3,8 @@ package com.example.customtelinkapp.Service.Mqtt;
 import android.content.Context;
 import android.util.Log;
 
+import com.example.customtelinkapp.Service.MqttService;
+
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
@@ -45,7 +47,7 @@ public class MqttHandler {
                     public void onSuccess(IMqttToken asyncActionToken) {
                         Log.d(TAG, "Connect success");
                         isConnected = true;
-                        subscribe("RD_STATUS");
+                        subscribe(MqttService.topicReceive);
                     }
 
                     @Override

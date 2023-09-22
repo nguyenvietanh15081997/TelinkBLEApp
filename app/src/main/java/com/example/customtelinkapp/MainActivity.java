@@ -64,7 +64,7 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
 
     private static final int OP_VENDOR_STATUS = 0x0211E1;
 
-    Button btnScan, btnProvision, btnType;
+    Button btnScan, btnProvision;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,7 +88,6 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
 
         btnScan = (Button) findViewById(R.id.btnScan);
         btnProvision = (Button) findViewById(R.id.btnProvision);
-        btnType = (Button) findViewById(R.id.btnType);
 
         TelinkMeshApplication.getInstance().addEventListener(AutoConnectEvent.EVENT_TYPE_AUTO_CONNECT_LOGIN, this);
         TelinkMeshApplication.getInstance().addEventListener(MeshEvent.EVENT_TYPE_DISCONNECTED, this);
