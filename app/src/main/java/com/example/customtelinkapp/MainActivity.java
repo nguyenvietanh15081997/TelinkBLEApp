@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.example.customtelinkapp.Controller.DeviceProvisionController;
+import com.example.customtelinkapp.Controller.FastProvisionController;
 import com.example.customtelinkapp.Service.MqttService;
 import com.example.customtelinkapp.model.AppSettings;
 import com.example.customtelinkapp.model.FUCache;
@@ -45,6 +46,7 @@ import com.telink.ble.mesh.foundation.MeshConfiguration;
 import com.telink.ble.mesh.foundation.MeshService;
 import com.telink.ble.mesh.foundation.event.AutoConnectEvent;
 import com.telink.ble.mesh.foundation.event.BindingEvent;
+import com.telink.ble.mesh.foundation.event.FastProvisioningEvent;
 import com.telink.ble.mesh.foundation.event.MeshEvent;
 import com.telink.ble.mesh.foundation.event.ProvisioningEvent;
 import com.telink.ble.mesh.foundation.event.ScanEvent;
@@ -60,11 +62,12 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
      */
     private MeshInfo mesh;
     public DeviceProvisionController deviceProvisionController;
+    public FastProvisionController fastProvisionController;
     private static final int OP_VENDOR_GET = 0x0211E0;
 
     private static final int OP_VENDOR_STATUS = 0x0211E1;
 
-    Button btnScan, btnProvision;
+    Button btnScan, btnProvision, btnFastProvision;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,8 +89,9 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 3);
         }
 
-        btnScan = (Button) findViewById(R.id.btnScan);
-        btnProvision = (Button) findViewById(R.id.btnProvision);
+        btnScan = findViewById(R.id.btnScan);
+        btnProvision = findViewById(R.id.btnProvision);
+        btnFastProvision = findViewById(R.id.btnFastProvision);
 
         TelinkMeshApplication.getInstance().addEventListener(AutoConnectEvent.EVENT_TYPE_AUTO_CONNECT_LOGIN, this);
         TelinkMeshApplication.getInstance().addEventListener(MeshEvent.EVENT_TYPE_DISCONNECTED, this);
@@ -100,29 +104,28 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
         TelinkMeshApplication.getInstance().addEventListener(BindingEvent.EVENT_TYPE_BIND_FAIL, this);
         TelinkMeshApplication.getInstance().addEventListener(ScanEvent.EVENT_TYPE_SCAN_TIMEOUT, this);
         TelinkMeshApplication.getInstance().addEventListener(ScanEvent.EVENT_TYPE_DEVICE_FOUND, this);
+        //fast provision event
+        TelinkMeshApplication.getInstance().addEventListener(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_ADDRESS_SET, this);
+        TelinkMeshApplication.getInstance().addEventListener(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_FAIL, this);
+        TelinkMeshApplication.getInstance().addEventListener(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_SUCCESS, this);
         TelinkMeshApplication.getInstance().addEventListener(ModelPublicationStatusMessage.class.getName(), this);
 
         //connect mqtt
-        MqttService.getInstance().connect(getApplicationContext());
+//        MqttService.getInstance().connect(getApplicationContext());
 
         mesh = TelinkMeshApplication.getInstance().getMeshInfo();
         startMeshService();
 
         deviceProvisionController = new DeviceProvisionController();
-
-        btnScan.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deviceProvisionController.startScan();
+        fastProvisionController = new FastProvisionController();
+        btnScan.setOnClickListener(v -> deviceProvisionController.startScan());
+        btnProvision.setOnClickListener(v -> {
+            if(deviceProvisionController.addAll()){
+                deviceProvisionController.provisionNext();
             }
         });
-        btnProvision.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(deviceProvisionController.addAll()){
-                    deviceProvisionController.provisionNext();
-                }
-            }
+        btnFastProvision.setOnClickListener(v -> {
+                fastProvisionController.actionStart();
         });
     }
     /**
@@ -243,6 +246,12 @@ public class MainActivity extends BaseActivity implements EventListener<String> 
             deviceProvisionController.onKeyBindFail((BindingEvent) event);
         } else if (event.getType().equals(BindingEvent.EVENT_TYPE_BIND_SUCCESS)) {
             deviceProvisionController.onKeyBindSuccess((BindingEvent) event);
+        } else if (event.getType().equals(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_ADDRESS_SET)) {
+            fastProvisionController.onDeviceFound(((FastProvisioningEvent) event).getFastProvisioningDevice());
+        } else if (event.getType().equals(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_FAIL)) {
+            fastProvisionController.onFastProvisionComplete(false);
+        } else if (event.getType().equals(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_SUCCESS)) {
+            fastProvisionController.onFastProvisionComplete(true);
         }
     }
     /**
