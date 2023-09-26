@@ -39,8 +39,8 @@
         </activity>
 
         <!-- Mqtt Service -->
-        <service android:name="org.eclipse.paho.android.service.MqttService">
-        </service>
+        <service android:name="org.eclipse.paho.android.service.MqttService"/>
+        <service android:name="com.example.customtelinkapp.Service.MyBleService"/>
 
     </application>
 
