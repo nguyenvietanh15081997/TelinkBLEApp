@@ -27,22 +27,22 @@ import org.json.JSONObject;
 
 public class MqttService {
     public final String TAG = "MqttService";
-//    // mqtt config for test
-//    public static final String mqttServerURI = "tcp://broker.emqx.io:1883";
-//    public static final String mqttClientId = "client1502@00";
-//    public static final String mqttUsername = "RD";
-//    public static final String mqttPassword = "1";
-//    // mqtt topic
-//    public static final String topicSend = "RD_CONTROL";
-//    public static final String topicReceive = "RD_STATUS";
-    // mqtt config for real
-    public static final String mqttServerURI = "tcp://localhost:1883";
-    public static final String mqttClientId = "android-client";
+    // mqtt config for test
+    public static final String mqttServerURI = "tcp://broker.emqx.io:1883";
+    public static final String mqttClientId = "client1502@00";
     public static final String mqttUsername = "RD";
-    public static final String mqttPassword = "";
+    public static final String mqttPassword = "1";
     // mqtt topic
-    public static final String topicSend = "device/androidBle";
-    public static final String topicReceive = "HC/androidBle";
+    public static final String topicSend = "RD_CONTROL";
+    public static final String topicReceive = "RD_STATUS";
+    // mqtt config for hc-core
+//    public static final String mqttServerURI = "tcp://localhost:1883";
+//    public static final String mqttClientId = "android-client";
+//    public static final String mqttUsername = "RD";
+//    public static final String mqttPassword = "";
+//    // mqtt topic
+//    public static final String topicSend = "device/androidBle";
+//    public static final String topicReceive = "HC/androidBle";
     DeviceProvisionController deviceProvisionController = new DeviceProvisionController();
     public static MqttService mThis = new MqttService();
     public static MqttService getInstance(){

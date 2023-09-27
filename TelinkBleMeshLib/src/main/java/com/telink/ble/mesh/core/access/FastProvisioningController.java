@@ -381,6 +381,7 @@ public class FastProvisioningController {
     }
 
     private int getProvisioningMeshAddress(int pid) {
+        MeshLogger.i(String.valueOf(pid));
         int elementCount = configuration.getElementCount(pid);
         if (elementCount != 0) {
             int address = configuration.getProvisioningIndex();

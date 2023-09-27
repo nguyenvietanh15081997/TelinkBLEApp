@@ -3,15 +3,15 @@ package com.example.customtelinkapp.Controller;
 import android.os.Handler;
 import android.util.SparseIntArray;
 
-import androidx.core.app.ComponentActivity;
-
-import com.example.customtelinkapp.MainActivity;
+import com.example.customtelinkapp.Message.SecurityMessage;
 import com.example.customtelinkapp.TelinkMeshApplication;
+import com.example.customtelinkapp.Util.Converter;
 import com.example.customtelinkapp.model.MeshInfo;
 import com.example.customtelinkapp.model.NetworkingDevice;
 import com.example.customtelinkapp.model.NetworkingState;
 import com.example.customtelinkapp.model.NodeInfo;
 import com.example.customtelinkapp.model.PrivateDevice;
+import com.telink.ble.mesh.core.Encipher;
 import com.telink.ble.mesh.entity.CompositionData;
 import com.telink.ble.mesh.entity.FastProvisioningConfiguration;
 import com.telink.ble.mesh.entity.FastProvisioningDevice;
@@ -25,7 +25,9 @@ import java.util.List;
 
 public class FastProvisionController {
     public MeshInfo meshInfo;
-
+    private final String RD_KEY = "4469676974616c403238313132383034";
+    private final String UNENCRYPTED_DATA_PREFIXES = "2402280428112020";
+    private final String PARAMS_PREFIXES = "0003";
     /**
      * ui devices
      */
@@ -56,7 +58,6 @@ public class FastProvisionController {
     public void onDeviceFound(FastProvisioningDevice fastProvisioningDevice) {
         NodeInfo nodeInfo = new NodeInfo();
         nodeInfo.meshAddress = fastProvisioningDevice.getNewAddress();
-
         nodeInfo.deviceUUID = new byte[16];
         System.arraycopy(fastProvisioningDevice.getMac(), 0, nodeInfo.deviceUUID, 0, 6);
         nodeInfo.macAddress = Arrays.bytesToHexString(fastProvisioningDevice.getMac(), ":");
@@ -67,7 +68,19 @@ public class FastProvisionController {
         NetworkingDevice device = new NetworkingDevice(nodeInfo);
         device.state = NetworkingState.PROVISIONING;
         devices.add(device);
-
+        byte[] adr = fastProvisioningDevice.getMac();
+        byte[] unicast = Arrays.reverse(Converter.intToByteArray(fastProvisioningDevice.getNewAddress()));
+        byte[] dataPrefixes = Arrays.hexToBytes(UNENCRYPTED_DATA_PREFIXES);
+        byte[] data = concatenateArrays(dataPrefixes,concatenateArrays(Arrays.reverse(adr),unicast));
+        byte[] key = Arrays.hexToBytes(RD_KEY);
+        byte[] re = Encipher.aes(data, key);
+        byte[] paramPrefixes = Arrays.reverse(Arrays.hexToBytes(PARAMS_PREFIXES));
+        SecurityMessage securityMessage = new SecurityMessage(fastProvisioningDevice.getNewAddress(),concatenateArrays( paramPrefixes,getLastElements(re,6)) );
+        MeshService.getInstance().sendMeshMessage(securityMessage);
+//        MeshLogger.i("unicast :" + fastProvisioningDevice.getNewAddress());
+//        MeshLogger.i("MAC :"+ java.util.Arrays.toString(Arrays.reverse(adr)));
+//        MeshLogger.i("data: "+java.util.Arrays.toString(data));
+//        MeshLogger.i( "encrypted: " + java.util.Arrays.toString(re));
         meshInfo.increaseProvisionIndex(fastProvisioningDevice.getElementCount());
     }
     public CompositionData getCompositionData(int pid) {
@@ -92,5 +105,30 @@ public class FastProvisionController {
         if (success) {
 //            meshInfo.saveOrUpdate(this);
         }
+    }
+    public static byte[] concatenateArrays(byte[] array1, byte[] array2) {
+        int length1 = array1.length;
+        int length2 = array2.length;
+
+        byte[] result = new byte[length1 + length2];
+
+        System.arraycopy(array1, 0, result, 0, length1);
+        System.arraycopy(array2, 0, result, length1, length2);
+
+        return result;
+    }
+    public static byte[] getLastElements(byte[] inputArray, int n) {
+        int length = inputArray.length;
+        byte[] outputArray = new byte[n];
+
+        if (n > length) {
+            throw new IllegalArgumentException("n is larger than the length of the input array");
+        }
+
+        for (int i = 0; i < n; i++) {
+            outputArray[i] = inputArray[length - n + i];
+        }
+
+        return outputArray;
     }
 }
