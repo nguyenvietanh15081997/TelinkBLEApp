@@ -1,6 +1,7 @@
 package com.example.customtelinkapp.Service;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
@@ -44,13 +45,14 @@ public class MyBleService extends Service implements EventListener<String> {
     protected final String TAG = getClass().getSimpleName();
     private Handler mHandler = new Handler();
     private MeshInfo mesh;
+    public static Context context;
     public FastProvisionController fastProvisionController;
     private static final int OP_VENDOR_GET = 0x0211E0;
     private static final int OP_VENDOR_STATUS = 0x0211E1;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "start MyBleService");
-
+        context = this;
         TelinkMeshApplication.getInstance().addEventListener(ScanEvent.EVENT_TYPE_SCAN_LOCATION_WARNING, this);
         TelinkMeshApplication.getInstance().addEventListener(BluetoothEvent.EVENT_TYPE_BLUETOOTH_STATE_CHANGE, this);
         TelinkMeshApplication.getInstance().addEventListener(AutoConnectEvent.EVENT_TYPE_AUTO_CONNECT_LOGIN, this);

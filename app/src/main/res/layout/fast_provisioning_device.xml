@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="409dp"
+        android:layout_height="729dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tvMacDevice"
+            android:layout_width="207dp"
+            android:layout_height="26dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:gravity="start|center_vertical"
+            android:text="macAdr"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvMeshAdr"
+            android:layout_width="208dp"
+            android:layout_height="25dp"
+            android:layout_marginStart="16dp"
+            android:text="meshAdr"
+            android:textStyle="italic"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvMacDevice" />
+
+        <Button
+            android:id="@+id/btn_kick_out"
+            android:layout_width="82dp"
+            android:layout_height="39dp"
+            android:layout_marginTop="28dp"
+            android:layout_marginEnd="24dp"
+            android:backgroundTint="#E12323"
+            android:text="Kick out"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/btn_auto_connect"
+            android:layout_width="63dp"
+            android:layout_height="39dp"
+            android:layout_marginTop="28dp"
+            android:text="ATCN"
+            app:layout_constraintEnd_toStartOf="@+id/btn_kick_out"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

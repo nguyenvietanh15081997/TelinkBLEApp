@@ -3,7 +3,9 @@ package com.example.customtelinkapp.Controller;
 import android.os.Handler;
 import android.util.SparseIntArray;
 
+import com.example.customtelinkapp.MainActivity;
 import com.example.customtelinkapp.Message.SecurityMessage;
+import com.example.customtelinkapp.Service.MyBleService;
 import com.example.customtelinkapp.TelinkMeshApplication;
 import com.example.customtelinkapp.Util.Converter;
 import com.example.customtelinkapp.model.MeshInfo;
@@ -31,7 +33,7 @@ public class FastProvisionController {
     /**
      * ui devices
      */
-    public List<NetworkingDevice> devices = new ArrayList<>();
+    public static List<NetworkingDevice> devices = new ArrayList<>();
 
     public Handler delayHandler = new Handler();
 
@@ -68,15 +70,8 @@ public class FastProvisionController {
         NetworkingDevice device = new NetworkingDevice(nodeInfo);
         device.state = NetworkingState.PROVISIONING;
         devices.add(device);
-        byte[] adr = fastProvisioningDevice.getMac();
-        byte[] unicast = Arrays.reverse(Converter.intToByteArray(fastProvisioningDevice.getNewAddress()));
-        byte[] dataPrefixes = Arrays.hexToBytes(UNENCRYPTED_DATA_PREFIXES);
-        byte[] data = concatenateArrays(dataPrefixes,concatenateArrays(Arrays.reverse(adr),unicast));
-        byte[] key = Arrays.hexToBytes(RD_KEY);
-        byte[] re = Encipher.aes(data, key);
-        byte[] paramPrefixes = Arrays.reverse(Arrays.hexToBytes(PARAMS_PREFIXES));
-        SecurityMessage securityMessage = new SecurityMessage(fastProvisioningDevice.getNewAddress(),concatenateArrays( paramPrefixes,getLastElements(re,6)) );
-        MeshService.getInstance().sendMeshMessage(securityMessage);
+        MainActivity.fastProvisionDeviceAdapter.notifyDataSetChanged();
+//        sendSecurityMessage(fastProvisioningDevice);
 //        MeshLogger.i("unicast :" + fastProvisioningDevice.getNewAddress());
 //        MeshLogger.i("MAC :"+ java.util.Arrays.toString(Arrays.reverse(adr)));
 //        MeshLogger.i("data: "+java.util.Arrays.toString(data));
@@ -93,18 +88,52 @@ public class FastProvisionController {
     }
 
     public void onFastProvisionComplete(boolean success) {
-        for (NetworkingDevice networkingDevice : devices) {
-            if (success) {
-                networkingDevice.state = NetworkingState.BIND_SUCCESS;
-                networkingDevice.nodeInfo.bound = true;
-                meshInfo.insertDevice(networkingDevice.nodeInfo);
-            } else {
-                networkingDevice.state = NetworkingState.PROVISION_FAIL;
+        MainActivity.autoConnect();
+        delayHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                MeshLogger.i("START SECURE");
+                for (NetworkingDevice networkingDevice : devices) {
+                    if (success) {
+                        networkingDevice.state = NetworkingState.BIND_SUCCESS;
+                        networkingDevice.nodeInfo.bound = true;
+                        meshInfo.insertDevice(networkingDevice.nodeInfo);
+                        sendSecurityMessageByAddress(networkingDevice.nodeInfo.meshAddress, networkingDevice.nodeInfo.macAddress);
+                    } else {
+                        networkingDevice.state = NetworkingState.PROVISION_FAIL;
+                    }
+                }
+                if (success) {
+                    meshInfo.saveOrUpdate(MyBleService.context);
+                }
             }
-        }
-        if (success) {
-//            meshInfo.saveOrUpdate(this);
-        }
+        }, 10 * 1000);
+    }
+
+    public void sendSecurityMessageByDevice(FastProvisioningDevice fastProvisioningDevice){
+        byte[] adr = fastProvisioningDevice.getMac();
+        byte[] unicast = Arrays.reverse(Converter.intToByteArray(fastProvisioningDevice.getNewAddress()));
+        byte[] dataPrefixes = Arrays.hexToBytes(UNENCRYPTED_DATA_PREFIXES);
+        byte[] data = concatenateArrays(dataPrefixes,concatenateArrays(Arrays.reverse(adr),unicast));
+        byte[] key = Arrays.hexToBytes(RD_KEY);
+        byte[] re = Encipher.aes(data, key);
+        byte[] paramPrefixes = Arrays.reverse(Arrays.hexToBytes(PARAMS_PREFIXES));
+        SecurityMessage securityMessage = new SecurityMessage(fastProvisioningDevice.getNewAddress(),concatenateArrays( paramPrefixes,getLastElements(re,6)) );
+        MeshService.getInstance().sendMeshMessage(securityMessage);
+
+    }
+    public void sendSecurityMessageByAddress(int meshAddress, String macAddress){
+        String cleanedMac = macAddress.replaceAll(":","");
+        byte[] adr = Arrays.hexToBytes(cleanedMac);
+        byte[] unicast = Arrays.reverse(Converter.intToByteArray(meshAddress));
+        byte[] dataPrefixes = Arrays.hexToBytes(UNENCRYPTED_DATA_PREFIXES);
+        byte[] data = concatenateArrays(dataPrefixes,concatenateArrays(Arrays.reverse(adr),unicast));
+        byte[] key = Arrays.hexToBytes(RD_KEY);
+        byte[] re = Encipher.aes(data, key);
+        byte[] paramPrefixes = Arrays.reverse(Arrays.hexToBytes(PARAMS_PREFIXES));
+        SecurityMessage securityMessage = new SecurityMessage(meshAddress,concatenateArrays( paramPrefixes,getLastElements(re,6)) );
+        MeshService.getInstance().sendMeshMessage(securityMessage);
+
     }
     public static byte[] concatenateArrays(byte[] array1, byte[] array2) {
         int length1 = array1.length;

@@ -5,7 +5,6 @@ import static com.example.customtelinkapp.Util.Converter.convertToUUID;
 
 import android.content.Context;
 import android.util.Log;
-import android.util.SparseArray;
 import android.widget.Toast;
 
 import com.example.customtelinkapp.Controller.DeviceProvisionController;
@@ -14,10 +13,7 @@ import com.example.customtelinkapp.Service.Mqtt.MqttHandler;
 import com.example.customtelinkapp.TelinkMeshApplication;
 import com.example.customtelinkapp.Util.RandomRequestIdGenerator;
 import com.example.customtelinkapp.model.MeshInfo;
-import com.telink.ble.mesh.foundation.MeshConfiguration;
 import com.telink.ble.mesh.foundation.MeshService;
-import com.telink.ble.mesh.foundation.parameter.ScanParameters;
-import com.telink.ble.mesh.util.Arrays;
 import com.telink.ble.mesh.util.MeshLogger;
 
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -49,7 +45,6 @@ public class MqttService {
         return mThis;
     }
     private MqttHandler mqttHandler;
-    public int gwAdr = 0;
     public void connect (Context context) {
         MeshLogger.i("CALL CONNECT");
         CustomMqttCallback customMqttCallback = new CustomMqttCallback(){
@@ -156,8 +151,6 @@ public class MqttService {
         MeshLogger.i("net-key received: " + netKey);
         MeshLogger.i("app-key received: " + appKey);
         int ivIndex = data.getInt("ivIndex");
-        int addrGw = data.getInt("addrGw");
-        gwAdr = addrGw;
         MeshService.getInstance().idle(true);
         MeshInfo meshInfo = MeshInfo.createNewMeshFromMqtt(appKey,netKey,ivIndex);
         TelinkMeshApplication.getInstance().setupMesh(meshInfo);
