@@ -1,5 +1,6 @@
 package com.example.customtelinkapp.Service;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +11,8 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import com.example.customtelinkapp.Controller.FastProvisionController;
+import com.example.customtelinkapp.MainActivity;
+import com.example.customtelinkapp.Message.SecurityMessage;
 import com.example.customtelinkapp.TelinkMeshApplication;
 import com.example.customtelinkapp.model.AppSettings;
 import com.example.customtelinkapp.model.FUCache;
@@ -41,8 +44,11 @@ import com.telink.ble.mesh.foundation.event.ScanEvent;
 import com.telink.ble.mesh.foundation.event.StatusNotificationEvent;
 import com.telink.ble.mesh.util.MeshLogger;
 
+import java.util.Arrays;
+
 public class MyBleService extends Service implements EventListener<String> {
     protected final String TAG = getClass().getSimpleName();
+    private final int OPCODE_SECURE_RESPONSE =  0x0211e1;
     private Handler mHandler = new Handler();
     private MeshInfo mesh;
     public static Context context;
@@ -59,11 +65,11 @@ public class MyBleService extends Service implements EventListener<String> {
         TelinkMeshApplication.getInstance().addEventListener(MeshEvent.EVENT_TYPE_DISCONNECTED, this);
         TelinkMeshApplication.getInstance().addEventListener(MeshEvent.EVENT_TYPE_MESH_EMPTY, this);
         TelinkMeshApplication.getInstance().addEventListener(FDStatusMessage.class.getName(), this);
-        TelinkMeshApplication.getInstance().addEventListener(ProvisioningEvent.EVENT_TYPE_PROVISION_BEGIN, this);
-        TelinkMeshApplication.getInstance().addEventListener(ProvisioningEvent.EVENT_TYPE_PROVISION_SUCCESS, this);
-        TelinkMeshApplication.getInstance().addEventListener(ProvisioningEvent.EVENT_TYPE_PROVISION_FAIL, this);
-        TelinkMeshApplication.getInstance().addEventListener(BindingEvent.EVENT_TYPE_BIND_SUCCESS, this);
-        TelinkMeshApplication.getInstance().addEventListener(BindingEvent.EVENT_TYPE_BIND_FAIL, this);
+//        TelinkMeshApplication.getInstance().addEventListener(ProvisioningEvent.EVENT_TYPE_PROVISION_BEGIN, this);
+//        TelinkMeshApplication.getInstance().addEventListener(ProvisioningEvent.EVENT_TYPE_PROVISION_SUCCESS, this);
+//        TelinkMeshApplication.getInstance().addEventListener(ProvisioningEvent.EVENT_TYPE_PROVISION_FAIL, this);
+//        TelinkMeshApplication.getInstance().addEventListener(BindingEvent.EVENT_TYPE_BIND_SUCCESS, this);
+//        TelinkMeshApplication.getInstance().addEventListener(BindingEvent.EVENT_TYPE_BIND_FAIL, this);
         TelinkMeshApplication.getInstance().addEventListener(ScanEvent.EVENT_TYPE_SCAN_TIMEOUT, this);
         TelinkMeshApplication.getInstance().addEventListener(ScanEvent.EVENT_TYPE_DEVICE_FOUND, this);
         //fast provision event
@@ -71,8 +77,9 @@ public class MyBleService extends Service implements EventListener<String> {
         TelinkMeshApplication.getInstance().addEventListener(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_FAIL, this);
         TelinkMeshApplication.getInstance().addEventListener(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_SUCCESS, this);
         TelinkMeshApplication.getInstance().addEventListener(ModelPublicationStatusMessage.class.getName(), this);
-
-        //connect mqtt
+        // unknownmessage
+        TelinkMeshApplication.getInstance().addEventListener(StatusNotificationEvent.EVENT_TYPE_NOTIFICATION_MESSAGE_UNKNOWN, this);
+//        //connect mqtt
         MqttService.getInstance().connect(getApplicationContext());
 
         mesh = TelinkMeshApplication.getInstance().getMeshInfo();
@@ -115,30 +122,57 @@ public class MyBleService extends Service implements EventListener<String> {
         return null;
     }
 
+    @SuppressLint("DefaultLocale")
     @Override
     public void performed(Event<String> event) {
         Log.i(TAG, "thinpv performed: " + event.getType());
         if (event.getType().equals(MeshEvent.EVENT_TYPE_MESH_EMPTY)) {
             MeshLogger.log(TAG + "#EVENT_TYPE_MESH_EMPTY");
         } else if (event.getType().equals(AutoConnectEvent.EVENT_TYPE_AUTO_CONNECT_LOGIN)) {
-            // get all device on off status when auto connect success
-            AppSettings.ONLINE_STATUS_ENABLE = MeshService.getInstance().getOnlineStatus();
-            if (!AppSettings.ONLINE_STATUS_ENABLE) {
-                MeshService.getInstance().getOnlineStatus();
-                int rspMax = TelinkMeshApplication.getInstance().getMeshInfo().getOnlineCountInAll();
-                int appKeyIndex = TelinkMeshApplication.getInstance().getMeshInfo().getDefaultAppKeyIndex();
-                OnOffGetMessage message = OnOffGetMessage.getSimple(0xFFFF, appKeyIndex, rspMax);
-                MeshService.getInstance().sendMeshMessage(message);
-            } else {
-                MeshLogger.log("online status enabled");
-            }
-            sendTimeStatus();
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    checkMeshOtaState();
+            //can ask device status but didnt
+            // start securing device
+            // Tạo một luồng để gửi các bản tin bảo mật
+            Thread sendThread = new Thread(() -> {
+                MeshLogger.i("Start sendThread");
+                fastProvisionController.startSecureDevice();
+                // Kiểm tra xem luồng có bị hủy hay không
+                if (Thread.currentThread().isInterrupted()) {
+                    MeshLogger.i("sendThread has been interrupted. Exiting...");
+                    return; // Thoát khỏi luồng
                 }
-            }, 3 * 1000);
+
+                // Các công việc khác sau khi công việc chính được thực hiện xong
+
+                // Gửi tín hiệu hủy đến luồng
+                Thread.currentThread().interrupt();
+            });
+            sendThread.start();
+
+            // Tạo một luồng khác để kiểm tra phản hồi sau 8 giây
+            Thread responseThread = new Thread(() -> {
+                try {
+                    Thread.sleep(8000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                MeshLogger.i("Start responseThread");
+                // In danh sách các thiết bị bảo mật thành công
+                MeshLogger.i("SecureAgain");
+                fastProvisionController.secureAgain();
+
+                // Kiểm tra xem luồng có bị hủy hay không
+                if (Thread.currentThread().isInterrupted()) {
+                    MeshLogger.i("sendThread has been interrupted. Exiting...");
+                    return; // Thoát khỏi luồng
+                }
+
+                // Các công việc khác sau khi công việc chính được thực hiện xong
+
+                // Gửi tín hiệu hủy đến luồng
+                Thread.currentThread().interrupt();
+            });
+            responseThread.start();
+
         } else if (event.getType().equals(MeshEvent.EVENT_TYPE_DISCONNECTED)) {
             mHandler.removeCallbacksAndMessages(null);
         } else if (event.getType().equals(FDStatusMessage.class.getName())) {
@@ -181,8 +215,41 @@ public class MyBleService extends Service implements EventListener<String> {
         } else if (event.getType().equals(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_SUCCESS)) {
             fastProvisionController.onFastProvisionComplete(true);
         }
-    }
+        else if (event.getType().equals(StatusNotificationEvent.EVENT_TYPE_NOTIFICATION_MESSAGE_UNKNOWN)) {
+            NotificationMessage notificationMessage = ((StatusNotificationEvent) event).getNotificationMessage();
+            int dest = notificationMessage.getDst();
+            int src = notificationMessage.getSrc();
+            int opcode = notificationMessage.getOpcode();
+            byte[] params = notificationMessage.getParams();
 
+            MeshLogger.i(String.format("dest=%d, src=%d, opcode=%d, params=%s", dest, src, opcode, Arrays.toString(params)));
+
+            if (opcode == OPCODE_SECURE_RESPONSE){
+                boolean isSuccess = checkSuccess(params);
+                if(isSuccess){
+                    fastProvisionController.onSecureSuccessResponse(src);
+                }
+            }
+        }
+    }
+    public boolean checkSuccess(byte[] params) {
+        // Kiểm tra độ dài của mảng byte
+        if (params.length < 8) {
+            return false; // Mảng byte không đủ độ dài
+        }
+
+        // Kiểm tra 2 byte đầu tiên (header)
+        if (params[0] != 0x03 || params[1] != 0x00) {
+            return false; // Header không đúng
+        }
+
+        // Kiểm tra hai byte tiếp theo
+        if (params[2] == (byte)0xff && params[3] == (byte)0xfe) {
+            return false;
+        }
+
+        return true;
+    }
     public void sendTimeStatus() {
         mHandler.postDelayed(() -> {
             long time = MeshUtils.getTaiTime();

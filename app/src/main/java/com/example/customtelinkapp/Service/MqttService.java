@@ -8,6 +8,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.customtelinkapp.Controller.DeviceProvisionController;
+import com.example.customtelinkapp.Controller.FastProvisionController;
 import com.example.customtelinkapp.Service.Mqtt.CustomMqttCallback;
 import com.example.customtelinkapp.Service.Mqtt.MqttHandler;
 import com.example.customtelinkapp.TelinkMeshApplication;
@@ -29,8 +30,8 @@ public class MqttService {
     public static final String mqttUsername = "RD";
     public static final String mqttPassword = "1";
     // mqtt topic
-    public static final String topicSend = "RD_CONTROL";
-    public static final String topicReceive = "RD_STATUS";
+    public static final String topicSend = "device/androidBle";
+    public static final String topicReceive = "HC/androidBle";
     // mqtt config for hc-core
 //    public static final String mqttServerURI = "tcp://localhost:1883";
 //    public static final String mqttClientId = "android-client";
@@ -40,12 +41,13 @@ public class MqttService {
 //    public static final String topicSend = "device/androidBle";
 //    public static final String topicReceive = "HC/androidBle";
     DeviceProvisionController deviceProvisionController = new DeviceProvisionController();
+    FastProvisionController fastProvisionController = new FastProvisionController();
     public static MqttService mThis = new MqttService();
     public static MqttService getInstance(){
         return mThis;
     }
     private MqttHandler mqttHandler;
-    public void connect (Context context) {
+    public void  connect (Context context) {
         MeshLogger.i("CALL CONNECT");
         CustomMqttCallback customMqttCallback = new CustomMqttCallback(){
             @Override
@@ -158,7 +160,8 @@ public class MqttService {
         MeshLogger.i("Update mesh info success");
     }
     void handleStartScan(JSONObject jsonMessage) throws JSONException {
-        deviceProvisionController.startScan();
+//        deviceProvisionController.startScan();
+        fastProvisionController.actionStart();
         jsonMessage.getJSONObject("data").put("code" , 0);
         publish(topicSend, jsonMessage.toString());
     }

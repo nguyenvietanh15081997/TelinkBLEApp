@@ -47,7 +47,7 @@ public class MqttHandler {
                     public void onSuccess(IMqttToken asyncActionToken) {
                         Log.d(TAG, "Connect success");
                         isConnected = true;
-                        subscribe(MqttService.topicReceive);
+//                        subscribe(MqttService.topicReceive);
                     }
 
                     @Override
