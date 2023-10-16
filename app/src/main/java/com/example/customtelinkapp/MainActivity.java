@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.ListView;
 
 import com.example.customtelinkapp.Controller.FastProvisionController;
+import com.example.customtelinkapp.Service.MqttService;
 import com.example.customtelinkapp.Service.MyBleService;
 import com.example.customtelinkapp.model.AppSettings;
 import com.example.customtelinkapp.model.MeshInfo;
@@ -37,6 +38,8 @@ public class MainActivity extends AppCompatActivity {
         lvDevices = findViewById(R.id.lv_devices);
         fastProvisionDeviceAdapter = new FastProvisionDeviceAdapter(this,R.layout.fast_provisioning_device, FastProvisionController.devices);
         lvDevices.setAdapter(fastProvisionDeviceAdapter);
+
+        MqttService.getInstance().connect(getApplicationContext());
 
         if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 2);

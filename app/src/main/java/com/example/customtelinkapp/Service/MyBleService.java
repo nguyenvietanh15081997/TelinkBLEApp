@@ -80,7 +80,7 @@ public class MyBleService extends Service implements EventListener<String> {
         // unknownmessage
         TelinkMeshApplication.getInstance().addEventListener(StatusNotificationEvent.EVENT_TYPE_NOTIFICATION_MESSAGE_UNKNOWN, this);
 //        //connect mqtt
-        MqttService.getInstance().connect(getApplicationContext());
+//        MqttService.getInstance().connect(getApplicationContext());
 
         mesh = TelinkMeshApplication.getInstance().getMeshInfo();
         startMeshService();
@@ -222,7 +222,7 @@ public class MyBleService extends Service implements EventListener<String> {
             int opcode = notificationMessage.getOpcode();
             byte[] params = notificationMessage.getParams();
 
-            MeshLogger.i(String.format("dest=%d, src=%d, opcode=%d, params=%s", dest, src, opcode, Arrays.toString(params)));
+//            MeshLogger.i(String.format("dest=%d, src=%d, opcode=%d, params=%s", dest, src, opcode, Arrays.toString(params)));
 
             if (opcode == OPCODE_SECURE_RESPONSE){
                 boolean isSuccess = checkSuccess(params);

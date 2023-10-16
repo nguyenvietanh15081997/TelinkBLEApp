@@ -98,6 +98,7 @@ public class FastProvisionController {
                 networkingDevice.state = NetworkingState.BIND_SUCCESS;
                 networkingDevice.nodeInfo.bound = true;
                 meshInfo.insertDevice(networkingDevice.nodeInfo);
+                MeshLogger.i(String.format("Mac: %s, Address: %s, Ele: %s, DevKey; %s",networkingDevice.nodeInfo.macAddress, networkingDevice.nodeInfo.meshAddress, networkingDevice.nodeInfo.elementCnt, java.util.Arrays.toString(networkingDevice.nodeInfo.deviceKey)));
             } else {
                 networkingDevice.state = NetworkingState.PROVISION_FAIL;
             }
