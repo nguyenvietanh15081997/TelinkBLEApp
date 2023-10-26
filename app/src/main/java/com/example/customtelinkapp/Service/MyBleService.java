@@ -85,7 +85,8 @@ public class MyBleService extends Service implements EventListener<String> {
         mesh = TelinkMeshApplication.getInstance().getMeshInfo();
         startMeshService();
 
-        fastProvisionController = new FastProvisionController();
+        Log.i("vietdeptrai[init size]", (String.valueOf(TelinkMeshApplication.getInstance().getMeshInfo().nodes.size())));
+        fastProvisionController = MqttService.fastProvisionController;
         fastProvisionController.actionStart();
 
         // returns the status
@@ -209,6 +210,7 @@ public class MyBleService extends Service implements EventListener<String> {
 //        } else if (event.getType().equals(BindingEvent.EVENT_TYPE_BIND_SUCCESS)) {
 //            deviceProvisionController.onKeyBindSuccess((BindingEvent) event);
         } else if (event.getType().equals(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_ADDRESS_SET)) {
+//            MeshLogger.i(((FastProvisioningEvent) event).getFastProvisioningDevice().toString());
             fastProvisionController.onDeviceFound(((FastProvisioningEvent) event).getFastProvisioningDevice());
         } else if (event.getType().equals(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_FAIL)) {
             fastProvisionController.onFastProvisionComplete(false);

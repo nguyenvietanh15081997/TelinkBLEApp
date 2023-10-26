@@ -33,6 +33,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.ParcelUuid;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.SparseArray;
 
 import com.telink.ble.mesh.core.Encipher;
@@ -395,6 +396,7 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
     }
 
     void removeDevice(int meshAddress) {
+        Log.i("vietdeptrai", "size right before kick: " + meshConfiguration.deviceKeyMap.size());
         this.meshConfiguration.deviceKeyMap.remove(meshAddress);
         mNetworkingController.removeDeviceKey(meshAddress);
         if (this.actionMode == Mode.AUTO_CONNECT) {
@@ -597,6 +599,7 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
             log("fast provisioning currently");
             return;
         }
+        Log.i("viet", "size of keymap init: " + meshConfiguration.deviceKeyMap.size());
         this.actionMode = Mode.FAST_PROVISION;
         mDelayHandler.removeCallbacksAndMessages(null);
         this.mActionParams = parameters;
@@ -1984,6 +1987,7 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
     }
 
     private void updateDeviceKeyMap(int address, byte[] deviceKey) {
+//        MeshLogger.i(String.format("address : %s, devKey: %s", address,deviceKey));
         this.mNetworkingController.addDeviceKey(address, deviceKey);
         this.meshConfiguration.deviceKeyMap.put(address, deviceKey);
     }

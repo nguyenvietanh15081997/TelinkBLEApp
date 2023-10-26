@@ -1,10 +1,12 @@
 package com.example.customtelinkapp.Controller;
 
 import android.os.Handler;
+import android.util.Log;
 import android.util.SparseIntArray;
 
 import com.example.customtelinkapp.MainActivity;
 import com.example.customtelinkapp.Message.SecurityMessage;
+import com.example.customtelinkapp.Service.MqttService;
 import com.example.customtelinkapp.Service.MyBleService;
 import com.example.customtelinkapp.TelinkMeshApplication;
 import com.example.customtelinkapp.Util.Converter;
@@ -61,25 +63,27 @@ public class FastProvisionController {
     }
 
     public void onDeviceFound(FastProvisioningDevice fastProvisioningDevice) {
-        NodeInfo nodeInfo = new NodeInfo();
-        nodeInfo.meshAddress = fastProvisioningDevice.getNewAddress();
-        nodeInfo.deviceUUID = new byte[16];
-        System.arraycopy(fastProvisioningDevice.getMac(), 0, nodeInfo.deviceUUID, 0, 6);
-        nodeInfo.macAddress = Arrays.bytesToHexString(fastProvisioningDevice.getMac(), ":");
-        nodeInfo.deviceKey = fastProvisioningDevice.getDeviceKey();
-        nodeInfo.elementCnt = fastProvisioningDevice.getElementCount();
-        nodeInfo.compositionData = getCompositionData(fastProvisioningDevice.getPid());
+        MeshLogger.i(fastProvisioningDevice.toString());
 
-        NetworkingDevice device = new NetworkingDevice(nodeInfo);
-        device.state = NetworkingState.PROVISIONING;
-        devices.add(device);
-        MainActivity.fastProvisionDeviceAdapter.notifyDataSetChanged();
-//        sendSecurityMessage(fastProvisioningDevice);
-//        MeshLogger.i("unicast :" + fastProvisioningDevice.getNewAddress());
-//        MeshLogger.i("MAC :"+ java.util.Arrays.toString(Arrays.reverse(adr)));
-//        MeshLogger.i("data: "+java.util.Arrays.toString(data));
-//        MeshLogger.i( "encrypted: " + java.util.Arrays.toString(re));
-        meshInfo.increaseProvisionIndex(fastProvisioningDevice.getElementCount());
+        try {
+            MeshLogger.i(fastProvisioningDevice.toString());
+            NodeInfo nodeInfo = new NodeInfo();
+            nodeInfo.meshAddress = fastProvisioningDevice.getNewAddress();
+            nodeInfo.deviceUUID = new byte[16];
+            System.arraycopy(fastProvisioningDevice.getMac(), 0, nodeInfo.deviceUUID, 0, 6);
+            nodeInfo.macAddress = Arrays.bytesToHexString(fastProvisioningDevice.getMac(), ":");
+            nodeInfo.deviceKey = fastProvisioningDevice.getDeviceKey();
+            nodeInfo.elementCnt = fastProvisioningDevice.getElementCount();
+            nodeInfo.compositionData = getCompositionData(fastProvisioningDevice.getPid());
+
+            NetworkingDevice device = new NetworkingDevice(nodeInfo);
+            device.state = NetworkingState.PROVISIONING;
+            devices.add(device);
+            MainActivity.fastProvisionDeviceAdapter.notifyDataSetChanged();
+            meshInfo.increaseProvisionIndex(fastProvisioningDevice.getElementCount());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public CompositionData getCompositionData(int pid) {
@@ -98,13 +102,14 @@ public class FastProvisionController {
                 networkingDevice.state = NetworkingState.BIND_SUCCESS;
                 networkingDevice.nodeInfo.bound = true;
                 meshInfo.insertDevice(networkingDevice.nodeInfo);
-                MeshLogger.i(String.format("Mac: %s, Address: %s, Ele: %s, DevKey; %s",networkingDevice.nodeInfo.macAddress, networkingDevice.nodeInfo.meshAddress, networkingDevice.nodeInfo.elementCnt, java.util.Arrays.toString(networkingDevice.nodeInfo.deviceKey)));
+//                MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceUUID), networkingDevice.nodeInfo.macAddress, Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceKey), networkingDevice.nodeInfo.compositionData.vid, networkingDevice.nodeInfo.compositionData.pid,networkingDevice.nodeInfo.meshAddress);
+                MeshLogger.i(String.format("Mac: %s, Address: %s, Ele: %s, DevKey; %s", networkingDevice.nodeInfo.macAddress, networkingDevice.nodeInfo.meshAddress, networkingDevice.nodeInfo.elementCnt, java.util.Arrays.toString(networkingDevice.nodeInfo.deviceKey)));
             } else {
                 networkingDevice.state = NetworkingState.PROVISION_FAIL;
             }
         }
         if (success) {
-            meshInfo.saveOrUpdate(MyBleService.context);
+            meshInfo.saveOrUpdate(TelinkMeshApplication.getInstance().getApplicationContext());
         }
     }
 
@@ -112,19 +117,26 @@ public class FastProvisionController {
         for (NetworkingDevice networkingDevice : devices) {
             networkingDevice.state = NetworkingState.BIND_SUCCESS;
             networkingDevice.nodeInfo.bound = true;
-            meshInfo.insertDevice(networkingDevice.nodeInfo);
+//            meshInfo.insertDevice(networkingDevice.nodeInfo);
             sendSecurityMessageByAddress(networkingDevice.nodeInfo.meshAddress, networkingDevice.nodeInfo.macAddress);
             securityDeviceAddress.add(networkingDevice.nodeInfo.meshAddress);
         }
     }
 
     public void onSecureSuccessResponse(int addressResponse) {
+        for (NetworkingDevice networkingDevice : devices) {
+            if (networkingDevice.nodeInfo.meshAddress == addressResponse) {
+                MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceUUID), networkingDevice.nodeInfo.macAddress, Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceKey), networkingDevice.nodeInfo.compositionData.vid, networkingDevice.nodeInfo.compositionData.pid, networkingDevice.nodeInfo.meshAddress);
+                break;
+            }
+        }
         responseSecuredDeviceAddress.add(addressResponse);
         securityDeviceAddress.removeAll(responseSecuredDeviceAddress);
         responseSecuredDeviceAddress.clear();
     }
-    public void secureAgain(){
-        for(int adr: securityDeviceAddress){
+
+    public void secureAgain() {
+        for (int adr : securityDeviceAddress) {
             NodeInfo nodeInfo = meshInfo.getDeviceByMeshAddress(adr);
             sendSecurityMessageByAddress(adr, nodeInfo.macAddress);
         }

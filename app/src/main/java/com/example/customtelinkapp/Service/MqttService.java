@@ -26,7 +26,7 @@ public class MqttService {
     public final String TAG = "MqttService";
     // mqtt config for test
     public static final String mqttServerURI = "tcp://broker.emqx.io:1883";
-    public static final String mqttClientId = "client1502@00";
+    public static final String mqttClientId = RandomRequestIdGenerator.generateRandomRequestId();
     public static final String mqttUsername = "RD";
     public static final String mqttPassword = "1";
     // mqtt topic
@@ -34,14 +34,14 @@ public class MqttService {
     public static final String topicReceive = "HC/androidBle";
     // mqtt config for hc-core
 //    public static final String mqttServerURI = "tcp://localhost:1883";
-//    public static final String mqttClientId = "android-client";
+//    public static final String mqttClientId = RandomRequestIdGenerator.generateRandomRequestId();;
 //    public static final String mqttUsername = "RD";
 //    public static final String mqttPassword = "";
 //    // mqtt topic
 //    public static final String topicSend = "device/androidBle";
 //    public static final String topicReceive = "HC/androidBle";
     DeviceProvisionController deviceProvisionController = new DeviceProvisionController();
-    FastProvisionController fastProvisionController = new FastProvisionController();
+    public static FastProvisionController fastProvisionController = new FastProvisionController();
     public static MqttService mThis = new MqttService();
     public static MqttService getInstance(){
         return mThis;
@@ -161,6 +161,7 @@ public class MqttService {
     }
     void handleStartScan(JSONObject jsonMessage) throws JSONException {
 //        deviceProvisionController.startScan();
+        Log.i("vietdeptrai[init size]", (String.valueOf(TelinkMeshApplication.getInstance().getMeshInfo().nodes.size())));
         fastProvisionController.actionStart();
         jsonMessage.getJSONObject("data").put("code" , 0);
         publish(topicSend, jsonMessage.toString());

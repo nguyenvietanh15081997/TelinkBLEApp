@@ -2,6 +2,7 @@ package com.example.customtelinkapp;
 
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -75,7 +76,6 @@ public class FastProvisionDeviceAdapter extends BaseAdapter {
             kickOut(device.nodeInfo.meshAddress);
             deviceList.remove(position);
             notifyDataSetChanged();
-            MeshLogger.i(String.valueOf(position));
         });
         viewHolderDevice.btn_auto_connect.setOnClickListener(v -> {
             autoConnect();
@@ -106,12 +106,15 @@ public class FastProvisionDeviceAdapter extends BaseAdapter {
                 }
             }, 10 * 1000);
         }
+        MeshService.getInstance().removeDevice(deviceInfo.meshAddress);
     }
     private void onKickOutFinish() {
         delayHandler.removeCallbacksAndMessages(null);
         MeshService.getInstance().removeDevice(deviceInfo.meshAddress);
         TelinkMeshApplication.getInstance().getMeshInfo().removeDeviceByMeshAddress(deviceInfo.meshAddress);
-        TelinkMeshApplication.getInstance().getMeshInfo().saveOrUpdate(MyBleService.context);
+        TelinkMeshApplication.getInstance().getMeshInfo().saveOrUpdate(TelinkMeshApplication.getInstance().getApplicationContext());
+        MainActivity.autoConnect();
+        Log.i("viet[afterkick]", (String.valueOf(TelinkMeshApplication.getInstance().getMeshInfo().nodes.size())));
     }
     private void autoConnect() {
         MeshLogger.log("main auto connect");
