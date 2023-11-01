@@ -33,6 +33,7 @@ public class NetworkingDevice {
     public static final String TAG_BIND = "bind";
 
     public static final String TAG_PUB_SET = "pub-set";
+    public boolean isScanned = false;
 
     public NetworkingDevice(NodeInfo nodeInfo) {
         this.nodeInfo = nodeInfo;

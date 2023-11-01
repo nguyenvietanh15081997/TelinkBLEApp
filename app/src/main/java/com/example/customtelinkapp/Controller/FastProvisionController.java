@@ -102,7 +102,6 @@ public class FastProvisionController {
                 networkingDevice.state = NetworkingState.BIND_SUCCESS;
                 networkingDevice.nodeInfo.bound = true;
                 meshInfo.insertDevice(networkingDevice.nodeInfo);
-//                MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceUUID), networkingDevice.nodeInfo.macAddress, Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceKey), networkingDevice.nodeInfo.compositionData.vid, networkingDevice.nodeInfo.compositionData.pid,networkingDevice.nodeInfo.meshAddress);
                 MeshLogger.i(String.format("Mac: %s, Address: %s, Ele: %s, DevKey; %s", networkingDevice.nodeInfo.macAddress, networkingDevice.nodeInfo.meshAddress, networkingDevice.nodeInfo.elementCnt, java.util.Arrays.toString(networkingDevice.nodeInfo.deviceKey)));
             } else {
                 networkingDevice.state = NetworkingState.PROVISION_FAIL;
@@ -115,18 +114,23 @@ public class FastProvisionController {
 
     public void startSecureDevice() {
         for (NetworkingDevice networkingDevice : devices) {
-            networkingDevice.state = NetworkingState.BIND_SUCCESS;
-            networkingDevice.nodeInfo.bound = true;
+            if(!networkingDevice.isScanned){
+                networkingDevice.state = NetworkingState.BIND_SUCCESS;
+                networkingDevice.nodeInfo.bound = true;
 //            meshInfo.insertDevice(networkingDevice.nodeInfo);
-            sendSecurityMessageByAddress(networkingDevice.nodeInfo.meshAddress, networkingDevice.nodeInfo.macAddress);
-            securityDeviceAddress.add(networkingDevice.nodeInfo.meshAddress);
+                sendSecurityMessageByAddress(networkingDevice.nodeInfo.meshAddress, networkingDevice.nodeInfo.macAddress);
+                securityDeviceAddress.add(networkingDevice.nodeInfo.meshAddress);
+            }
         }
     }
 
     public void onSecureSuccessResponse(int addressResponse) {
         for (NetworkingDevice networkingDevice : devices) {
             if (networkingDevice.nodeInfo.meshAddress == addressResponse) {
-                MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceUUID), networkingDevice.nodeInfo.macAddress, Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceKey), networkingDevice.nodeInfo.compositionData.vid, networkingDevice.nodeInfo.compositionData.pid, networkingDevice.nodeInfo.meshAddress);
+                if(!networkingDevice.isScanned){
+                    networkingDevice.isScanned = true;
+                    MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceUUID), networkingDevice.nodeInfo.macAddress, Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceKey), networkingDevice.nodeInfo.compositionData.vid, networkingDevice.nodeInfo.compositionData.pid, networkingDevice.nodeInfo.meshAddress);
+                }
                 break;
             }
         }
@@ -140,19 +144,6 @@ public class FastProvisionController {
             NodeInfo nodeInfo = meshInfo.getDeviceByMeshAddress(adr);
             sendSecurityMessageByAddress(adr, nodeInfo.macAddress);
         }
-    }
-
-    public void sendSecurityMessageByDevice(FastProvisioningDevice fastProvisioningDevice) {
-        byte[] adr = fastProvisioningDevice.getMac();
-        byte[] unicast = Arrays.reverse(Converter.intToByteArray(fastProvisioningDevice.getNewAddress()));
-        byte[] dataPrefixes = Arrays.hexToBytes(UNENCRYPTED_DATA_PREFIXES);
-        byte[] data = concatenateArrays(dataPrefixes, concatenateArrays(Arrays.reverse(adr), unicast));
-        byte[] key = Arrays.hexToBytes(RD_KEY);
-        byte[] re = Encipher.aes(data, key);
-        byte[] paramPrefixes = Arrays.reverse(Arrays.hexToBytes(PARAMS_PREFIXES));
-        SecurityMessage securityMessage = new SecurityMessage(fastProvisioningDevice.getNewAddress(), concatenateArrays(paramPrefixes, getLastElements(re, 6)));
-        MeshService.getInstance().sendMeshMessage(securityMessage);
-
     }
 
     public void sendSecurityMessageByAddress(int meshAddress, String macAddress) {

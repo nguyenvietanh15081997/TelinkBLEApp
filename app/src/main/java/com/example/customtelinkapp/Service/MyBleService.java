@@ -1,14 +1,18 @@
 package com.example.customtelinkapp.Service;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.customtelinkapp.Controller.FastProvisionController;
 import com.example.customtelinkapp.MainActivity;
@@ -59,6 +63,8 @@ public class MyBleService extends Service implements EventListener<String> {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "start MyBleService");
         context = this;
+
+//        TelinkMeshApplication.getInstance().onCreate();
         TelinkMeshApplication.getInstance().addEventListener(ScanEvent.EVENT_TYPE_SCAN_LOCATION_WARNING, this);
         TelinkMeshApplication.getInstance().addEventListener(BluetoothEvent.EVENT_TYPE_BLUETOOTH_STATE_CHANGE, this);
         TelinkMeshApplication.getInstance().addEventListener(AutoConnectEvent.EVENT_TYPE_AUTO_CONNECT_LOGIN, this);
@@ -80,7 +86,7 @@ public class MyBleService extends Service implements EventListener<String> {
         // unknownmessage
         TelinkMeshApplication.getInstance().addEventListener(StatusNotificationEvent.EVENT_TYPE_NOTIFICATION_MESSAGE_UNKNOWN, this);
 //        //connect mqtt
-//        MqttService.getInstance().connect(getApplicationContext());
+        MqttService.getInstance().connect(getApplicationContext());
 
         mesh = TelinkMeshApplication.getInstance().getMeshInfo();
         startMeshService();
@@ -130,7 +136,7 @@ public class MyBleService extends Service implements EventListener<String> {
         if (event.getType().equals(MeshEvent.EVENT_TYPE_MESH_EMPTY)) {
             MeshLogger.log(TAG + "#EVENT_TYPE_MESH_EMPTY");
         } else if (event.getType().equals(AutoConnectEvent.EVENT_TYPE_AUTO_CONNECT_LOGIN)) {
-            //can ask device status but didnt
+            //can ask device status but don't, if needed do ask right under here
             // start securing device
             // Tạo một luồng để gửi các bản tin bảo mật
             Thread sendThread = new Thread(() -> {
