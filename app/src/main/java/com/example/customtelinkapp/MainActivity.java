@@ -18,6 +18,7 @@ import com.example.customtelinkapp.Service.MyBleService;
 import com.example.customtelinkapp.model.AppSettings;
 import com.example.customtelinkapp.model.MeshInfo;
 import com.example.customtelinkapp.model.NodeInfo;
+import com.telink.ble.mesh.core.Encipher;
 import com.telink.ble.mesh.foundation.MeshService;
 import com.telink.ble.mesh.foundation.parameter.AutoConnectParameters;
 import com.telink.ble.mesh.util.MeshLogger;
@@ -35,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnFastProvision, btnNewMesh, btnProvision;
     public static FastProvisionDeviceAdapter fastProvisionDeviceAdapter;
     ListView lvDevices;
-    private String namespaceUUID = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
+    public static final int LOCATION_PERMISSION_REQUEST_CODE = 1001; // Đây là request code
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,8 +49,10 @@ public class MainActivity extends AppCompatActivity {
 
 //        MqttService.getInstance().connect(getApplicationContext());
 
-        if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 2);
+        // Kiểm tra xem ứng dụng đã có quyền ACCESS_FINE_LOCATION chưa
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // Yêu cầu quyền ACCESS_FINE_LOCATION từ người dùng
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
         }
         if (ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION}, 3);
@@ -75,7 +78,8 @@ public class MainActivity extends AppCompatActivity {
             TelinkMeshApplication.getInstance().createNewMesh();
         });
         btnProvision.setOnClickListener(v -> {
-            md5("A4:C1:38:9B:98:21", namespaceUUID);
+            Log.i(TAG, "onCreate: "+ com.telink.ble.mesh.util.Arrays.bytesToHexString(Encipher.calcUuidByMac("A4:C1:38:43:CD:FB")));
+
         });
     }
     public static void autoConnect() {
@@ -94,41 +98,6 @@ public class MainActivity extends AppCompatActivity {
             MeshService.getInstance().autoConnect(new AutoConnectParameters());
         }
 
-    }
-
-    private void md5(String macAddress, String uuid){
-        try {
-            // Convert the MAC address to bytes
-            byte[] macBytes = macAddress.replace(":", "").getBytes();
-            Log.i(TAG, "mac: "+ Arrays.toString(macBytes));
-//            byte[] macBytes = com.telink.ble.mesh.util.Arrays.hexToBytes(macAddress.replace(":", ""));
-            Log.i(TAG, "mac Using util: " + Arrays.toString(com.telink.ble.mesh.util.Arrays.hexToBytes(macAddress.replace(":", ""))));
-            // Convert the UUID to bytes
-            byte[] uuidBytes = uuid.toString().getBytes();
-//            byte[] uuidBytes = com.telink.ble.mesh.util.Arrays.hexToBytes(uuid.replace("-", ""));
-
-            Log.i(TAG, "uuid namespace: " + Arrays.toString(uuidBytes));
-            Log.i(TAG, "uuid using util: " + Arrays.toString(com.telink.ble.mesh.util.Arrays.hexToBytes(uuid.replace("-", ""))));
-            // Create a SecretKeySpec object with the UUID as the key
-            SecretKeySpec secretKeySpec = new SecretKeySpec(uuidBytes, "HmacMD5");
-
-            // Create a Mac object with the HMAC-MD5 algorithm
-            Mac mac = Mac.getInstance("HmacMD5");
-            mac.init(secretKeySpec);
-
-            // Compute the HMAC
-            byte[] hmac = mac.doFinal(macBytes);
-
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hmac) {
-                sb.append(String.format("%02x", b & 0xff));
-            }
-
-            String hmacHash = sb.toString();
-            Log.i(TAG, "md5: " + "HMAC-MD5 hash of MAC address \"" + macAddress + "\" and UUID \"" + uuid + "\" is: " + hmacHash);
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override

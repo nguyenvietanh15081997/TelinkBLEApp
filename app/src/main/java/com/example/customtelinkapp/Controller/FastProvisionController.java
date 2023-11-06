@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FastProvisionController {
-    public MeshInfo meshInfo;
+    public MeshInfo meshInfo =  TelinkMeshApplication.getInstance().getMeshInfo();;
     private final String RD_KEY = "4469676974616c403238313132383034";
     private final String UNENCRYPTED_DATA_PREFIXES = "2402280428112020";
     private final String PARAMS_PREFIXES = "0003";
@@ -44,11 +44,10 @@ public class FastProvisionController {
 
     public void actionStart() {
         MeshLogger.i("In action start");
-        meshInfo = TelinkMeshApplication.getInstance().getMeshInfo();
+
         MeshLogger.i(String.valueOf(meshInfo));
         int provisionIndex = meshInfo.getProvisionIndex();
         SparseIntArray targetDevicePid = new SparseIntArray(targetDevices.length);
-        MeshLogger.i(String.valueOf(provisionIndex));
 
         CompositionData compositionData;
         for (PrivateDevice privateDevice : targetDevices) {
@@ -63,10 +62,9 @@ public class FastProvisionController {
     }
 
     public void onDeviceFound(FastProvisioningDevice fastProvisioningDevice) {
-        MeshLogger.i(fastProvisioningDevice.toString());
-
         try {
             MeshLogger.i(fastProvisioningDevice.toString());
+//            MeshLogger.i(String.valueOf(meshInfo));
             NodeInfo nodeInfo = new NodeInfo();
             nodeInfo.meshAddress = fastProvisioningDevice.getNewAddress();
             nodeInfo.deviceUUID = new byte[16];
@@ -75,11 +73,15 @@ public class FastProvisionController {
             nodeInfo.deviceKey = fastProvisioningDevice.getDeviceKey();
             nodeInfo.elementCnt = fastProvisioningDevice.getElementCount();
             nodeInfo.compositionData = getCompositionData(fastProvisioningDevice.getPid());
+            nodeInfo.deviceUUID = Encipher.calcUuidByMac(fastProvisioningDevice.getMac());
 
             NetworkingDevice device = new NetworkingDevice(nodeInfo);
             device.state = NetworkingState.PROVISIONING;
             devices.add(device);
-            MainActivity.fastProvisionDeviceAdapter.notifyDataSetChanged();
+            Log.i(this.getClass().getName(), "element count: " + fastProvisioningDevice.getElementCount());
+            //for debug
+//            MainActivity.fastProvisionDeviceAdapter.notifyDataSetChanged();
+
             meshInfo.increaseProvisionIndex(fastProvisioningDevice.getElementCount());
         } catch (Exception e) {
             e.printStackTrace();
@@ -96,11 +98,12 @@ public class FastProvisionController {
     }
 
     public void onFastProvisionComplete(boolean success) {
-        MainActivity.autoConnect();
+//        MainActivity.autoConnect();
         for (NetworkingDevice networkingDevice : devices) {
             if (success) {
                 networkingDevice.state = NetworkingState.BIND_SUCCESS;
                 networkingDevice.nodeInfo.bound = true;
+                 Log.i("TAG", "mesh info ooooooo :" + meshInfo.toString());
                 meshInfo.insertDevice(networkingDevice.nodeInfo);
                 MeshLogger.i(String.format("Mac: %s, Address: %s, Ele: %s, DevKey; %s", networkingDevice.nodeInfo.macAddress, networkingDevice.nodeInfo.meshAddress, networkingDevice.nodeInfo.elementCnt, java.util.Arrays.toString(networkingDevice.nodeInfo.deviceKey)));
             } else {
@@ -108,6 +111,7 @@ public class FastProvisionController {
             }
         }
         if (success) {
+            MainActivity.autoConnect();
             meshInfo.saveOrUpdate(TelinkMeshApplication.getInstance().getApplicationContext());
         }
     }

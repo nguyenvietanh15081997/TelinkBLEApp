@@ -2,16 +2,22 @@ package com.example.customtelinkapp.Service;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.customtelinkapp.Controller.FastProvisionController;
@@ -59,10 +65,36 @@ public class MyBleService extends Service implements EventListener<String> {
     public FastProvisionController fastProvisionController;
     private static final int OP_VENDOR_GET = 0x0211E0;
     private static final int OP_VENDOR_STATUS = 0x0211E1;
+    private static final int REQUEST_CODE_LOCATION = 1001;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "start MyBleService");
         context = this;
+
+        fastProvisionController = new FastProvisionController();
+        if (Build.VERSION.SDK_INT >= 26) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                // Yêu cầu quyền truy cập vị trí nếu chưa được cấp
+                Activity myActivity = new Activity();
+                ActivityCompat.requestPermissions(myActivity,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        REQUEST_CODE_LOCATION);
+            }
+
+            String CHANNEL_ID = "my_channel_01";
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+                    "Channel human readable title",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+
+            ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+
+            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setContentTitle("")
+                    .setContentText("").build();
+
+            startForeground(1, notification);
+        }
 
 //        TelinkMeshApplication.getInstance().onCreate();
         TelinkMeshApplication.getInstance().addEventListener(ScanEvent.EVENT_TYPE_SCAN_LOCATION_WARNING, this);
@@ -91,9 +123,8 @@ public class MyBleService extends Service implements EventListener<String> {
         mesh = TelinkMeshApplication.getInstance().getMeshInfo();
         startMeshService();
 
-        Log.i("vietdeptrai[init size]", (String.valueOf(TelinkMeshApplication.getInstance().getMeshInfo().nodes.size())));
-        fastProvisionController = MqttService.fastProvisionController;
-        fastProvisionController.actionStart();
+//        fastProvisionController = MqttService.fastProvisionController;
+//        fastProvisionController.actionStart();
 
         // returns the status
         // of the program
@@ -118,8 +149,8 @@ public class MyBleService extends Service implements EventListener<String> {
 
     @Override
     public void onDestroy() {
-        TelinkMeshApplication.getInstance().removeEventListener(this);
-        MeshService.getInstance().clear();
+//        TelinkMeshApplication.getInstance().removeEventListener(this);
+//        MeshService.getInstance().clear();
         super.onDestroy();
     }
 
@@ -216,7 +247,6 @@ public class MyBleService extends Service implements EventListener<String> {
 //        } else if (event.getType().equals(BindingEvent.EVENT_TYPE_BIND_SUCCESS)) {
 //            deviceProvisionController.onKeyBindSuccess((BindingEvent) event);
         } else if (event.getType().equals(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_ADDRESS_SET)) {
-//            MeshLogger.i(((FastProvisioningEvent) event).getFastProvisioningDevice().toString());
             fastProvisionController.onDeviceFound(((FastProvisioningEvent) event).getFastProvisioningDevice());
         } else if (event.getType().equals(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_FAIL)) {
             fastProvisionController.onFastProvisionComplete(false);
@@ -240,6 +270,9 @@ public class MyBleService extends Service implements EventListener<String> {
             }
         }
     }
+
+
+
     public boolean checkSuccess(byte[] params) {
         // Kiểm tra độ dài của mảng byte
         if (params.length < 8) {
