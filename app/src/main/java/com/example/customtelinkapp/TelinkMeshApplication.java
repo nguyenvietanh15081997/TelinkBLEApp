@@ -210,8 +210,8 @@ public class TelinkMeshApplication extends MeshApplication {
         }
 //        meshInfo = createTestMesh();
     }
-    public void createNewMesh(){
-        meshInfo = MeshInfo.createNewMesh(this);
+    public MeshInfo createNewMesh(){
+        return MeshInfo.createNewMesh(this);
     }
     public void setupMesh(MeshInfo mesh) {
         MeshLogger.d("setup mesh info: " + meshInfo.toString());

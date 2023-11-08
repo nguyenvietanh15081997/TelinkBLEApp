@@ -16,6 +16,7 @@ import com.example.customtelinkapp.Controller.FastProvisionController;
 import com.example.customtelinkapp.Service.MqttService;
 import com.example.customtelinkapp.Service.MyBleService;
 import com.example.customtelinkapp.model.AppSettings;
+import com.example.customtelinkapp.model.FUCacheService;
 import com.example.customtelinkapp.model.MeshInfo;
 import com.example.customtelinkapp.model.NodeInfo;
 import com.telink.ble.mesh.core.Encipher;
@@ -75,7 +76,11 @@ public class MainActivity extends AppCompatActivity {
         });
         btnNewMesh.setOnClickListener(v -> {
             Log.i(TAG, "Create new Mesh");
-            TelinkMeshApplication.getInstance().createNewMesh();
+            MeshService.getInstance().idle(true);
+            FUCacheService.getInstance().clear(this);
+            MeshInfo meshInfo = TelinkMeshApplication.getInstance().createNewMesh();
+            TelinkMeshApplication.getInstance().setupMesh(meshInfo);
+            MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfiguration());
         });
         btnProvision.setOnClickListener(v -> {
             Log.i(TAG, "onCreate: "+ com.telink.ble.mesh.util.Arrays.bytesToHexString(Encipher.calcUuidByMac("A4:C1:38:43:CD:FB")));
@@ -85,9 +90,9 @@ public class MainActivity extends AppCompatActivity {
     public static void autoConnect() {
         MeshLogger.log("main auto connect");
         MeshInfo meshInfo = TelinkMeshApplication.getInstance().getMeshInfo();
+        Log.i("TAG", "nodes size: " + meshInfo.nodes.size());
         if (meshInfo.nodes.size() == 0) {
             MeshService.getInstance().idle(true);
-            MeshService.getInstance().autoConnect(new AutoConnectParameters());
         } else {
             int directAdr = MeshService.getInstance().getDirectConnectedNodeAddress();
             NodeInfo nodeInfo = meshInfo.getDeviceByMeshAddress(directAdr);

@@ -145,6 +145,7 @@ public class MyBleService extends Service implements EventListener<String> {
         /// set DLE enable
         MeshService.getInstance().resetExtendBearerMode(SharedPreferenceHelper.getExtendBearerMode(this));
 
+        Log.i(TAG, "node size: " + mesh.nodes.size());
     }
 
     @Override

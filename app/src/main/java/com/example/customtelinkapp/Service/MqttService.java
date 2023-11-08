@@ -25,21 +25,19 @@ import org.json.JSONObject;
 public class MqttService {
     public final String TAG = "MqttService";
     // mqtt config for test
-    public static final String mqttServerURI = "tcp://broker.emqx.io:1883";
-    public static final String mqttClientId = RandomRequestIdGenerator.generateRandomRequestId();
+//    public static final String mqttServerURI = "tcp://broker.emqx.io:1883";
+//    public static final String mqttClientId = RandomRequestIdGenerator.generateRandomRequestId();
+//    public static final String mqttUsername = "RD";
+//    public static final String mqttPassword = "1";
+
+    // mqtt config for hc-core
+    public static final String mqttServerURI = "tcp://localhost:1883";
+    public static final String mqttClientId = RandomRequestIdGenerator.generateRandomRequestId();;
     public static final String mqttUsername = "RD";
-    public static final String mqttPassword = "1";
-    // mqtt topic
+    public static final String mqttPassword = "";
+//    // mqtt topic
     public static final String topicSend = "device/androidBle";
     public static final String topicReceive = "HC/androidBle";
-    // mqtt config for hc-core
-//    public static final String mqttServerURI = "tcp://localhost:1883";
-//    public static final String mqttClientId = RandomRequestIdGenerator.generateRandomRequestId();;
-//    public static final String mqttUsername = "RD";
-//    public static final String mqttPassword = "";
-//    // mqtt topic
-//    public static final String topicSend = "device/androidBle";
-//    public static final String topicReceive = "HC/androidBle";
     DeviceProvisionController deviceProvisionController = new DeviceProvisionController();
     public static FastProvisionController fastProvisionController = new FastProvisionController();
     public static MqttService mThis = new MqttService();

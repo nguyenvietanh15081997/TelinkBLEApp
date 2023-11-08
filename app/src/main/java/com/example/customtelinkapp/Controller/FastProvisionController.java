@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FastProvisionController {
-    public MeshInfo meshInfo =  TelinkMeshApplication.getInstance().getMeshInfo();;
+    public MeshInfo meshInfo =  TelinkMeshApplication.getInstance().getMeshInfo();
     private final String RD_KEY = "4469676974616c403238313132383034";
     private final String UNENCRYPTED_DATA_PREFIXES = "2402280428112020";
     private final String PARAMS_PREFIXES = "0003";
@@ -63,6 +63,7 @@ public class FastProvisionController {
 
     public void onDeviceFound(FastProvisioningDevice fastProvisioningDevice) {
         try {
+            meshInfo =  TelinkMeshApplication.getInstance().getMeshInfo();
             MeshLogger.i(fastProvisioningDevice.toString());
 //            MeshLogger.i(String.valueOf(meshInfo));
             NodeInfo nodeInfo = new NodeInfo();
@@ -98,12 +99,11 @@ public class FastProvisionController {
     }
 
     public void onFastProvisionComplete(boolean success) {
-//        MainActivity.autoConnect();
+        meshInfo =  TelinkMeshApplication.getInstance().getMeshInfo();
         for (NetworkingDevice networkingDevice : devices) {
             if (success) {
                 networkingDevice.state = NetworkingState.BIND_SUCCESS;
                 networkingDevice.nodeInfo.bound = true;
-                 Log.i("TAG", "mesh info ooooooo :" + meshInfo.toString());
                 meshInfo.insertDevice(networkingDevice.nodeInfo);
                 MeshLogger.i(String.format("Mac: %s, Address: %s, Ele: %s, DevKey; %s", networkingDevice.nodeInfo.macAddress, networkingDevice.nodeInfo.meshAddress, networkingDevice.nodeInfo.elementCnt, java.util.Arrays.toString(networkingDevice.nodeInfo.deviceKey)));
             } else {
@@ -121,7 +121,6 @@ public class FastProvisionController {
             if(!networkingDevice.isScanned){
                 networkingDevice.state = NetworkingState.BIND_SUCCESS;
                 networkingDevice.nodeInfo.bound = true;
-//            meshInfo.insertDevice(networkingDevice.nodeInfo);
                 sendSecurityMessageByAddress(networkingDevice.nodeInfo.meshAddress, networkingDevice.nodeInfo.macAddress);
                 securityDeviceAddress.add(networkingDevice.nodeInfo.meshAddress);
             }
@@ -144,6 +143,7 @@ public class FastProvisionController {
     }
 
     public void secureAgain() {
+        meshInfo =  TelinkMeshApplication.getInstance().getMeshInfo();
         for (int adr : securityDeviceAddress) {
             NodeInfo nodeInfo = meshInfo.getDeviceByMeshAddress(adr);
             sendSecurityMessageByAddress(adr, nodeInfo.macAddress);
