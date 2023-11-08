@@ -106,13 +106,13 @@ public class MqttService {
 
             // Tạo đối tượng JSONObject con trong mảng device
             JSONObject deviceObject = new JSONObject();
-            deviceObject.put("id", convertToUUID(deviceUUID));
+            deviceObject.put("id", convertToUUID(deviceUUID).toLowerCase());
             deviceObject.put("addr", meshAdr);
             deviceObject.put("mac", macAddress);
 
             // Tạo đối tượng JSONObject con data trong device
             JSONObject dataInnerObject = new JSONObject();
-            dataInnerObject.put("devKey", convertToUUID(deviceKey));
+            dataInnerObject.put("devKey", convertToUUID(deviceKey).toLowerCase());
             dataInnerObject.put("vid", vid); // Giá trị int tùy chọn
             dataInnerObject.put("pid", pid); // Giá trị int tùy chọn
 
