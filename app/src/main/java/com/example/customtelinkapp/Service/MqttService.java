@@ -13,6 +13,7 @@ import com.example.customtelinkapp.Service.Mqtt.CustomMqttCallback;
 import com.example.customtelinkapp.Service.Mqtt.MqttHandler;
 import com.example.customtelinkapp.TelinkMeshApplication;
 import com.example.customtelinkapp.Util.RandomRequestIdGenerator;
+import com.example.customtelinkapp.model.FUCacheService;
 import com.example.customtelinkapp.model.MeshInfo;
 import com.telink.ble.mesh.foundation.MeshService;
 import com.telink.ble.mesh.util.MeshLogger;
@@ -108,11 +109,11 @@ public class MqttService {
             JSONObject deviceObject = new JSONObject();
             deviceObject.put("id", convertToUUID(deviceUUID).toLowerCase());
             deviceObject.put("addr", meshAdr);
-            deviceObject.put("mac", macAddress);
+            deviceObject.put("mac", macAddress.toLowerCase());
 
             // Tạo đối tượng JSONObject con data trong device
             JSONObject dataInnerObject = new JSONObject();
-            dataInnerObject.put("devKey", convertToUUID(deviceKey).toLowerCase());
+            dataInnerObject.put("deviceKey", convertToUUID(deviceKey).toLowerCase());
             dataInnerObject.put("vid", vid); // Giá trị int tùy chọn
             dataInnerObject.put("pid", pid); // Giá trị int tùy chọn
 
@@ -159,9 +160,28 @@ public class MqttService {
     }
     void handleStartScan(JSONObject jsonMessage) throws JSONException {
 //        deviceProvisionController.startScan();
-        Log.i("vietdeptrai[init size]", (String.valueOf(TelinkMeshApplication.getInstance().getMeshInfo().nodes.size())));
         fastProvisionController.actionStart();
         jsonMessage.getJSONObject("data").put("code" , 0);
         publish(topicSend, jsonMessage.toString());
+    }
+    void handleResetMesh(){
+        Log.i(TAG, "Create new Mesh");
+        MeshService.getInstance().idle(true);
+        FUCacheService.getInstance().clear(TelinkMeshApplication.getInstance());
+        MeshInfo meshInfo = TelinkMeshApplication.getInstance().createNewMesh();
+        TelinkMeshApplication.getInstance().setupMesh(meshInfo);
+        MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfiguration());
+    }
+
+    public void callProvisionNormal(){
+        JSONObject msgProvisionNormal = new JSONObject();
+        try {
+            msgProvisionNormal.put("cmd", "provisionNormal");
+            msgProvisionNormal.put("rqi", RandomRequestIdGenerator.generateRandomRequestId());
+            msgProvisionNormal.put("data", new JSONObject());
+            publish(MqttService.topicSend, msgProvisionNormal.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }

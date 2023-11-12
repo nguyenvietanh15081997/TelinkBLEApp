@@ -18,15 +18,16 @@ import com.example.customtelinkapp.Service.MyBleService;
 import com.example.customtelinkapp.model.AppSettings;
 import com.example.customtelinkapp.model.FUCacheService;
 import com.example.customtelinkapp.model.MeshInfo;
+import com.example.customtelinkapp.model.NetworkingDevice;
 import com.example.customtelinkapp.model.NodeInfo;
 import com.telink.ble.mesh.core.Encipher;
 import com.telink.ble.mesh.foundation.MeshService;
 import com.telink.ble.mesh.foundation.parameter.AutoConnectParameters;
+import com.telink.ble.mesh.util.Arrays;
 import com.telink.ble.mesh.util.MeshLogger;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -83,8 +84,15 @@ public class MainActivity extends AppCompatActivity {
             MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfiguration());
         });
         btnProvision.setOnClickListener(v -> {
-            Log.i(TAG, "onCreate: "+ com.telink.ble.mesh.util.Arrays.bytesToHexString(Encipher.calcUuidByMac("A4:C1:38:43:CD:FB")));
-
+            MeshInfo meshInfo = TelinkMeshApplication.getInstance().getMeshInfo();
+            for (NetworkingDevice networkingDevice : FastProvisionController.devices) {
+                Log.i(TAG, "appkey: " + meshInfo.getAppKeyStr());
+                Log.i(TAG, "netkey: " + meshInfo.getNetKeyStr());
+                Log.i(TAG, "devkey: " + Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceKey));
+                Log.i(TAG, "ivIndev: " + meshInfo.ivIndex);
+                Log.i(TAG, "elementCount: " + networkingDevice.nodeInfo.elementCnt);
+                Log.i(TAG, "meshADR: " + networkingDevice.nodeInfo.meshAddress);
+            }
         });
     }
     public static void autoConnect() {

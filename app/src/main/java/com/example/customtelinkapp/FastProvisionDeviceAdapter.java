@@ -114,7 +114,7 @@ public class FastProvisionDeviceAdapter extends BaseAdapter {
         TelinkMeshApplication.getInstance().getMeshInfo().removeDeviceByMeshAddress(deviceInfo.meshAddress);
         TelinkMeshApplication.getInstance().getMeshInfo().saveOrUpdate(TelinkMeshApplication.getInstance().getApplicationContext());
         MainActivity.autoConnect();
-        Log.i("viet[afterkick]", (String.valueOf(TelinkMeshApplication.getInstance().getMeshInfo().nodes.size())));
+        Log.i("[afterkick]", (String.valueOf(TelinkMeshApplication.getInstance().getMeshInfo().nodes.size())));
     }
     private void autoConnect() {
         MeshLogger.log("main auto connect");

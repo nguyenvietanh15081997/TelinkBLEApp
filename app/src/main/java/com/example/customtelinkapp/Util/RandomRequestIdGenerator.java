@@ -16,9 +16,4 @@ public class RandomRequestIdGenerator {
 
         return requestId.toString();
     }
-
-    public static void main(String[] args) {
-        String requestId = generateRandomRequestId();
-        System.out.println(requestId); // Ví dụ kết quả: "abc123456"
-    }
 }

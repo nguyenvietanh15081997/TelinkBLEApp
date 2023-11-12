@@ -1,5 +1,6 @@
 package com.example.customtelinkapp.Controller;
 
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.util.Log;
 import android.util.SparseIntArray;
@@ -15,6 +16,7 @@ import com.example.customtelinkapp.model.NetworkingDevice;
 import com.example.customtelinkapp.model.NetworkingState;
 import com.example.customtelinkapp.model.NodeInfo;
 import com.example.customtelinkapp.model.PrivateDevice;
+import com.example.customtelinkapp.model.SecurityDevice;
 import com.telink.ble.mesh.core.Encipher;
 import com.telink.ble.mesh.entity.CompositionData;
 import com.telink.ble.mesh.entity.FastProvisioningConfiguration;
@@ -24,11 +26,21 @@ import com.telink.ble.mesh.foundation.parameter.FastProvisioningParameters;
 import com.telink.ble.mesh.util.Arrays;
 import com.telink.ble.mesh.util.MeshLogger;
 
+import org.w3c.dom.Node;
+
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class FastProvisionController {
-    public MeshInfo meshInfo =  TelinkMeshApplication.getInstance().getMeshInfo();
+
+    public static boolean isSendSecurity = false;
+    public static Lock lock = new ReentrantLock();
+    public static List<SecurityDevice> securityDeviceList = new ArrayList<>();
+    public MeshInfo meshInfo = TelinkMeshApplication.getInstance().getMeshInfo();
     private final String RD_KEY = "4469676974616c403238313132383034";
     private final String UNENCRYPTED_DATA_PREFIXES = "2402280428112020";
     private final String PARAMS_PREFIXES = "0003";
@@ -36,15 +48,14 @@ public class FastProvisionController {
      * ui devices
      */
     public static List<NetworkingDevice> devices = new ArrayList<>();
-    private List<Integer> securityDeviceAddress = new ArrayList<>();
-    private List<Integer> responseSecuredDeviceAddress = new ArrayList<>();
-    public Handler delayHandler = new Handler();
 
     public PrivateDevice[] targetDevices = PrivateDevice.values();
 
     public void actionStart() {
+        devices.clear();
+        securityDeviceList.clear();
         MeshLogger.i("In action start");
-
+        isSendSecurity = true;
         MeshLogger.i(String.valueOf(meshInfo));
         int provisionIndex = meshInfo.getProvisionIndex();
         SparseIntArray targetDevicePid = new SparseIntArray(targetDevices.length);
@@ -63,11 +74,11 @@ public class FastProvisionController {
 
     public void onDeviceFound(FastProvisioningDevice fastProvisioningDevice) {
         try {
-            meshInfo =  TelinkMeshApplication.getInstance().getMeshInfo();
+            meshInfo = TelinkMeshApplication.getInstance().getMeshInfo();
             MeshLogger.i(fastProvisioningDevice.toString());
-//            MeshLogger.i(String.valueOf(meshInfo));
             NodeInfo nodeInfo = new NodeInfo();
             nodeInfo.meshAddress = fastProvisioningDevice.getNewAddress();
+
             nodeInfo.deviceUUID = new byte[16];
             System.arraycopy(fastProvisioningDevice.getMac(), 0, nodeInfo.deviceUUID, 0, 6);
             nodeInfo.macAddress = Arrays.bytesToHexString(fastProvisioningDevice.getMac(), ":");
@@ -79,11 +90,11 @@ public class FastProvisionController {
             NetworkingDevice device = new NetworkingDevice(nodeInfo);
             device.state = NetworkingState.PROVISIONING;
             devices.add(device);
-            Log.i(this.getClass().getName(), "element count: " + fastProvisioningDevice.getElementCount());
             //for debug
-//            MainActivity.fastProvisionDeviceAdapter.notifyDataSetChanged();
+            MainActivity.fastProvisionDeviceAdapter.notifyDataSetChanged();
 
             meshInfo.increaseProvisionIndex(fastProvisioningDevice.getElementCount());
+            meshInfo.saveOrUpdate(TelinkMeshApplication.getInstance());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -99,7 +110,7 @@ public class FastProvisionController {
     }
 
     public void onFastProvisionComplete(boolean success) {
-        meshInfo =  TelinkMeshApplication.getInstance().getMeshInfo();
+        meshInfo = TelinkMeshApplication.getInstance().getMeshInfo();
         for (NetworkingDevice networkingDevice : devices) {
             if (success) {
                 networkingDevice.state = NetworkingState.BIND_SUCCESS;
@@ -112,42 +123,50 @@ public class FastProvisionController {
         }
         if (success) {
             MainActivity.autoConnect();
-            meshInfo.saveOrUpdate(TelinkMeshApplication.getInstance().getApplicationContext());
+            meshInfo.saveOrUpdate(TelinkMeshApplication.getInstance());
         }
+        MqttService.getInstance().callProvisionNormal();
+    }
+
+    public int checkSecure(SecurityDevice securityDevice) {
+        sendSecurityMessageByAddress(securityDevice.getNodeInfo().meshAddress, securityDevice.getNodeInfo().macAddress);
+        final int[] rs = {0};
+        new Handler().postDelayed(() -> {
+            if (!securityDevice.getSecured()) {
+                rs[0] = 1;
+            }
+        }, 500);
+        return rs[0];
     }
 
     public void startSecureDevice() {
-        for (NetworkingDevice networkingDevice : devices) {
-            if(!networkingDevice.isScanned){
-                networkingDevice.state = NetworkingState.BIND_SUCCESS;
-                networkingDevice.nodeInfo.bound = true;
-                sendSecurityMessageByAddress(networkingDevice.nodeInfo.meshAddress, networkingDevice.nodeInfo.macAddress);
-                securityDeviceAddress.add(networkingDevice.nodeInfo.meshAddress);
+        Log.i("TAG", "startSecureDevice");
+        Log.i("BLEService", "NODE SIZE: " + TelinkMeshApplication.getInstance().getMeshInfo().nodes.size());
+        List<NodeInfo> listDeviceFound = new ArrayList<>();
+        for(NetworkingDevice networkingDevice : devices){
+            listDeviceFound.add(networkingDevice.nodeInfo);
+        }
+        List<NodeInfo> commonElements = new ArrayList<>(TelinkMeshApplication.getInstance().getMeshInfo().nodes);
+
+        commonElements.retainAll(listDeviceFound);
+        Log.i("----------", "common element: " + commonElements);
+
+        for (NodeInfo nodeInfo : TelinkMeshApplication.getInstance().getMeshInfo().nodes) {
+            SecurityDevice securityDevice = new SecurityDevice(nodeInfo, false, 4);
+            Log.i("TAG", "startSecureDevice: ");
+            lock.lock();
+            try {
+                securityDeviceList.add(securityDevice);
+            } finally {
+                lock.unlock();
+            }
+
+            if (checkSecure(securityDevice) == 0) {
+                securityDevice.getNodeInfo().setIsSecured(false); // update security device false to reset manual device
+                sendNewDeviceToHC(securityDevice);
             }
         }
-    }
-
-    public void onSecureSuccessResponse(int addressResponse) {
-        for (NetworkingDevice networkingDevice : devices) {
-            if (networkingDevice.nodeInfo.meshAddress == addressResponse) {
-                if(!networkingDevice.isScanned){
-                    networkingDevice.isScanned = true;
-                    MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceUUID), networkingDevice.nodeInfo.macAddress, Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceKey), networkingDevice.nodeInfo.compositionData.vid, networkingDevice.nodeInfo.compositionData.pid, networkingDevice.nodeInfo.meshAddress);
-                }
-                break;
-            }
-        }
-        responseSecuredDeviceAddress.add(addressResponse);
-        securityDeviceAddress.removeAll(responseSecuredDeviceAddress);
-        responseSecuredDeviceAddress.clear();
-    }
-
-    public void secureAgain() {
-        meshInfo =  TelinkMeshApplication.getInstance().getMeshInfo();
-        for (int adr : securityDeviceAddress) {
-            NodeInfo nodeInfo = meshInfo.getDeviceByMeshAddress(adr);
-            sendSecurityMessageByAddress(adr, nodeInfo.macAddress);
-        }
+        FastProvisionController.isSendSecurity = false;
     }
 
     public void sendSecurityMessageByAddress(int meshAddress, String macAddress) {
@@ -161,7 +180,13 @@ public class FastProvisionController {
         byte[] paramPrefixes = Arrays.reverse(Arrays.hexToBytes(PARAMS_PREFIXES));
         SecurityMessage securityMessage = new SecurityMessage(meshAddress, concatenateArrays(paramPrefixes, getLastElements(re, 6)));
         MeshService.getInstance().sendMeshMessage(securityMessage);
+    }
 
+    public void sendNewDeviceToHC(SecurityDevice securityDevice) {
+        NodeInfo nodeInfo = securityDevice.getNodeInfo();
+        MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(nodeInfo.deviceUUID), nodeInfo.macAddress,
+                Arrays.bytesToHexString(nodeInfo.deviceKey), nodeInfo.compositionData.vid,
+                nodeInfo.compositionData.pid, nodeInfo.meshAddress);
     }
 
     public static byte[] concatenateArrays(byte[] array1, byte[] array2) {
@@ -189,5 +214,14 @@ public class FastProvisionController {
         }
 
         return outputArray;
+    }
+
+    public static byte[] getArrayElements(byte[] array, int startIndex, int endIndex) {
+        int length = endIndex - startIndex + 1;
+        byte[] result = new byte[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = array[startIndex + i];
+        }
+        return result;
     }
 }

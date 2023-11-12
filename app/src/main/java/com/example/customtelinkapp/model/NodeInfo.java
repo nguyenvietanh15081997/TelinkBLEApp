@@ -18,7 +18,7 @@ import java.util.List;
 
 public class NodeInfo implements Serializable {
 
-
+    public boolean isSecured =  false;
     /**
      * primary element unicast address
      */
@@ -130,7 +130,7 @@ public class NodeInfo implements Serializable {
     private OfflineCheckTask offlineCheckTask = (OfflineCheckTask) () -> {
         onlineState = OnlineState.OFFLINE;
         MeshLogger.log("offline check task running");
-//        TelinkMeshApplication.getInstance().dispatchEvent(new NodeStatusChangedEvent(TelinkMeshApplication.getInstance(), NodeStatusChangedEvent.EVENT_TYPE_NODE_STATUS_CHANGED, NodeInfo.this));
+        TelinkMeshApplication.getInstance().dispatchEvent(new NodeStatusChangedEvent(TelinkMeshApplication.getInstance(), NodeStatusChangedEvent.EVENT_TYPE_NODE_STATUS_CHANGED, NodeInfo.this));
     };
 
     public OnlineState getOnlineState() {
@@ -361,6 +361,12 @@ public class NodeInfo implements Serializable {
         return pidInfo;
     }
 
+    public boolean getIsSecured(){
+        return isSecured;
+    }
+    public void setIsSecured(boolean isSecured){
+        this.isSecured = isSecured;
+    }
     public boolean isDefaultBind() {
         return defaultBind;
     }

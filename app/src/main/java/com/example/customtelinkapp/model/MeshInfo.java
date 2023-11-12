@@ -7,6 +7,7 @@ import android.util.SparseArray;
 import androidx.annotation.NonNull;
 
 import com.example.customtelinkapp.R;
+import com.example.customtelinkapp.TelinkMeshApplication;
 import com.example.customtelinkapp.model.json.AddressRange;
 import com.telink.ble.mesh.core.MeshUtils;
 import com.telink.ble.mesh.core.networking.NetworkLayerPDU;
@@ -366,7 +367,7 @@ public class MeshInfo implements Serializable, Cloneable {
 
     public static MeshInfo createNewMesh(Context context) {
         // 0x7FFF
-        final int DEFAULT_LOCAL_ADDRESS = 0x0001;
+        final int DEFAULT_LOCAL_ADDRESS = 0x4E20;
         MeshInfo meshInfo = new MeshInfo();
 
         // for test
@@ -416,7 +417,7 @@ public class MeshInfo implements Serializable, Cloneable {
 
     public static MeshInfo createNewMeshFromMqtt( String appKey, String netKey, int ivIndex) {
         // 0x7FFF
-        final int DEFAULT_LOCAL_ADDRESS = 0x0001;
+        final int DEFAULT_LOCAL_ADDRESS = 0x4E20;
         MeshInfo meshInfo = new MeshInfo();
 
         final byte[] NET_KEY = Arrays.hexToBytes(netKey);

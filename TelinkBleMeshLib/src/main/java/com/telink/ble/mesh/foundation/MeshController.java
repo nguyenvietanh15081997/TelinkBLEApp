@@ -396,7 +396,7 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
     }
 
     void removeDevice(int meshAddress) {
-        Log.i("vietdeptrai", "size right before kick: " + meshConfiguration.deviceKeyMap.size());
+        Log.i("[before kick]", "size right before kick: " + meshConfiguration.deviceKeyMap.size());
         this.meshConfiguration.deviceKeyMap.remove(meshAddress);
         mNetworkingController.removeDeviceKey(meshAddress);
         if (this.actionMode == Mode.AUTO_CONNECT) {
@@ -599,7 +599,7 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
             log("fast provisioning currently");
             return;
         }
-        Log.i("viet", "size of keymap init: " + meshConfiguration.deviceKeyMap.size());
+        Log.i("[size init]", "size of keymap init: " + meshConfiguration.deviceKeyMap.size());
         this.actionMode = Mode.FAST_PROVISION;
         mDelayHandler.removeCallbacksAndMessages(null);
         this.mActionParams = parameters;
