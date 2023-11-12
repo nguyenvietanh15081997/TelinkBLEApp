@@ -143,15 +143,16 @@ public class FastProvisionController {
         Log.i("TAG", "startSecureDevice");
         Log.i("BLEService", "NODE SIZE: " + TelinkMeshApplication.getInstance().getMeshInfo().nodes.size());
         List<NodeInfo> listDeviceFound = new ArrayList<>();
-        for(NetworkingDevice networkingDevice : devices){
+
+        for (NetworkingDevice networkingDevice : devices) {
             listDeviceFound.add(networkingDevice.nodeInfo);
         }
+
         List<NodeInfo> commonElements = new ArrayList<>(TelinkMeshApplication.getInstance().getMeshInfo().nodes);
 
         commonElements.retainAll(listDeviceFound);
-        Log.i("----------", "common element: " + commonElements);
 
-        for (NodeInfo nodeInfo : TelinkMeshApplication.getInstance().getMeshInfo().nodes) {
+        for (NodeInfo nodeInfo : commonElements) {
             SecurityDevice securityDevice = new SecurityDevice(nodeInfo, false, 4);
             Log.i("TAG", "startSecureDevice: ");
             lock.lock();
