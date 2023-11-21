@@ -1,6 +1,5 @@
 package com.example.customtelinkapp.Controller;
 
-import android.os.CountDownTimer;
 import android.os.Handler;
 import android.util.Log;
 import android.util.SparseIntArray;
@@ -8,7 +7,6 @@ import android.util.SparseIntArray;
 import com.example.customtelinkapp.MainActivity;
 import com.example.customtelinkapp.Message.SecurityMessage;
 import com.example.customtelinkapp.Service.MqttService;
-import com.example.customtelinkapp.Service.MyBleService;
 import com.example.customtelinkapp.TelinkMeshApplication;
 import com.example.customtelinkapp.Util.Converter;
 import com.example.customtelinkapp.model.MeshInfo;
@@ -26,12 +24,10 @@ import com.telink.ble.mesh.foundation.parameter.FastProvisioningParameters;
 import com.telink.ble.mesh.util.Arrays;
 import com.telink.ble.mesh.util.MeshLogger;
 
-import org.w3c.dom.Node;
-
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -40,7 +36,7 @@ public class FastProvisionController {
     public static boolean isSendSecurity = false;
     public static Lock lock = new ReentrantLock();
     public static List<SecurityDevice> securityDeviceList = new ArrayList<>();
-    public MeshInfo meshInfo = TelinkMeshApplication.getInstance().getMeshInfo();
+    public static MeshInfo meshInfo = TelinkMeshApplication.getInstance().getMeshInfo();
     private final String RD_KEY = "4469676974616c403238313132383034";
     private final String UNENCRYPTED_DATA_PREFIXES = "2402280428112020";
     private final String PARAMS_PREFIXES = "0003";
@@ -91,7 +87,7 @@ public class FastProvisionController {
             device.state = NetworkingState.PROVISIONING;
             devices.add(device);
             //for debug
-            MainActivity.fastProvisionDeviceAdapter.notifyDataSetChanged();
+//            MainActivity.fastProvisionDeviceAdapter.notifyDataSetChanged();
 
             meshInfo.increaseProvisionIndex(fastProvisioningDevice.getElementCount());
             meshInfo.saveOrUpdate(TelinkMeshApplication.getInstance());
@@ -126,22 +122,37 @@ public class FastProvisionController {
             meshInfo.saveOrUpdate(TelinkMeshApplication.getInstance());
         }
         MqttService.getInstance().callProvisionNormal();
+        Log.i("TAG", "-- list size---: " + TelinkMeshApplication.getInstance().getMeshInfo().nodes.size());
+        MainActivity.fastProvisionDeviceAdapter.notifyDataSetChanged();
     }
 
-    public int checkSecure(SecurityDevice securityDevice) {
+//    public int checkSecure(SecurityDevice securityDevice) {
+//        sendSecurityMessageByAddress(securityDevice.getNodeInfo().meshAddress, securityDevice.getNodeInfo().macAddress);
+//        final int[] rs = {0};
+//        new Handler().postDelayed(() -> {
+//            if (!securityDevice.getSecured()) {
+//                rs[0] = 1;
+//            }
+//        }, 400);
+//        return rs[0];
+//    }
+    public void checkSecure(SecurityDevice securityDevice) {
         sendSecurityMessageByAddress(securityDevice.getNodeInfo().meshAddress, securityDevice.getNodeInfo().macAddress);
-        final int[] rs = {0};
+
         new Handler().postDelayed(() -> {
-            if (!securityDevice.getSecured()) {
-                rs[0] = 1;
+            if (securityDevice.getSecured()) {
+                securityDevice.getNodeInfo().setIsSecured(false); // Cập nhật trạng thái bảo mật
+                sendNewDeviceToHC(securityDevice); // Gửi thiết bị mới đến trung tâm điều khiển
+            } else {
+                // Nếu thiết bị không được bảo mật sau 400ms, có thể thực hiện các bước cần thiết
+
             }
-        }, 500);
-        return rs[0];
+        }, 400);
     }
+
 
     public void startSecureDevice() {
         Log.i("TAG", "startSecureDevice");
-        Log.i("BLEService", "NODE SIZE: " + TelinkMeshApplication.getInstance().getMeshInfo().nodes.size());
         List<NodeInfo> listDeviceFound = new ArrayList<>();
 
         for (NetworkingDevice networkingDevice : devices) {
@@ -153,19 +164,14 @@ public class FastProvisionController {
         commonElements.retainAll(listDeviceFound);
 
         for (NodeInfo nodeInfo : commonElements) {
-            SecurityDevice securityDevice = new SecurityDevice(nodeInfo, false, 4);
-            Log.i("TAG", "startSecureDevice: ");
+            SecurityDevice securityDevice = new SecurityDevice(nodeInfo, false, 4, nodeInfo.compositionData.vid);
             lock.lock();
             try {
                 securityDeviceList.add(securityDevice);
             } finally {
                 lock.unlock();
             }
-
-            if (checkSecure(securityDevice) == 0) {
-                securityDevice.getNodeInfo().setIsSecured(false); // update security device false to reset manual device
-                sendNewDeviceToHC(securityDevice);
-            }
+            checkSecure(securityDevice);
         }
         FastProvisionController.isSendSecurity = false;
     }
@@ -184,9 +190,10 @@ public class FastProvisionController {
     }
 
     public void sendNewDeviceToHC(SecurityDevice securityDevice) {
+        Log.i("TAG", "vid send: " + securityDevice.getVidDevice());
         NodeInfo nodeInfo = securityDevice.getNodeInfo();
         MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(nodeInfo.deviceUUID), nodeInfo.macAddress,
-                Arrays.bytesToHexString(nodeInfo.deviceKey), nodeInfo.compositionData.vid,
+                Arrays.bytesToHexString(nodeInfo.deviceKey), securityDevice.getVidDevice(),
                 nodeInfo.compositionData.pid, nodeInfo.meshAddress);
     }
 

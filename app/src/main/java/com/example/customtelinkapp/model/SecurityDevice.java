@@ -3,15 +3,23 @@ package com.example.customtelinkapp.model;
 public class SecurityDevice {
     private NodeInfo nodeInfo;
     private Boolean isSecured;
+    private int timeout;
+    private int vidDevice;
 
-    public SecurityDevice(NodeInfo nodeInfo, Boolean isSecured, int timeout) {
+    public int getVidDevice() {
+        return vidDevice;
+    }
+
+    public void setVidDevice(int vidDevice) {
+        this.vidDevice = vidDevice;
+    }
+
+    public SecurityDevice(NodeInfo nodeInfo, Boolean isSecured, int timeout,int vidDevice) {
         this.nodeInfo = nodeInfo;
         this.isSecured = isSecured;
         this.timeout = timeout;
+        this.vidDevice = vidDevice;
     }
-
-    private int timeout;
-
     public NodeInfo getNodeInfo() {
         return nodeInfo;
     }

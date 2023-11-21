@@ -24,4 +24,21 @@ public class Converter {
         byteArray[1] = (byte) (num & 0xFF);
         return byteArray;
     }
+
+    public static int byteArrayToInt(byte[] bytes) {
+        // Đảm bảo mảng không rỗng
+        if (bytes.length == 0) {
+            throw new IllegalArgumentException("Mảng byte không được rỗng");
+        }
+
+        int result = 0;
+
+        // Sử dụng phép toán bitwise để chuyển đổi byte thành int
+        for (int i = 0; i < bytes.length; i++) {
+            result |= (bytes[i] & 0xFF) << ((bytes.length - 1 - i) * 8);
+        }
+
+        return result;
+    }
+
 }

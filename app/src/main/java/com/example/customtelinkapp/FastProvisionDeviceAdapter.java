@@ -10,10 +10,8 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.example.customtelinkapp.Service.MyBleService;
 import com.example.customtelinkapp.model.AppSettings;
 import com.example.customtelinkapp.model.MeshInfo;
-import com.example.customtelinkapp.model.NetworkingDevice;
 import com.example.customtelinkapp.model.NodeInfo;
 import com.telink.ble.mesh.core.message.config.NodeResetMessage;
 import com.telink.ble.mesh.foundation.MeshService;
@@ -28,17 +26,17 @@ public class FastProvisionDeviceAdapter extends BaseAdapter {
     private Handler delayHandler = new Handler();
     MainActivity context;
     int layout;
-    List<NetworkingDevice> deviceList;
+    List<NodeInfo> nodes;
 
-    public FastProvisionDeviceAdapter(MainActivity context, int layout, List<NetworkingDevice> deviceList) {
+    public FastProvisionDeviceAdapter(MainActivity context, int layout, List<NodeInfo> nodes) {
         this.context = context;
         this.layout = layout;
-        this.deviceList = deviceList;
+        this.nodes = nodes;
     }
 
     @Override
     public int getCount() {
-        return deviceList.size();
+        return nodes.size();
     }
 
     @Override
@@ -67,14 +65,14 @@ public class FastProvisionDeviceAdapter extends BaseAdapter {
         } else {
             viewHolderDevice = (ViewHolderDevice) convertView.getTag();
         }
-        NetworkingDevice device = deviceList.get(position);
+        NodeInfo device = nodes.get(position);
 
-        viewHolderDevice.tvMacDevice.setText(device.nodeInfo.macAddress);
-        viewHolderDevice.tvMeshDevice.setText(String.valueOf(device.nodeInfo.meshAddress));
+        viewHolderDevice.tvMacDevice.setText(device.macAddress);
+        viewHolderDevice.tvMeshDevice.setText(String.valueOf(device.meshAddress));
 
         viewHolderDevice.btn_kick_out.setOnClickListener(v -> {
-            kickOut(device.nodeInfo.meshAddress);
-            deviceList.remove(position);
+            kickOut(device.meshAddress);
+            nodes.remove(position);
             notifyDataSetChanged();
         });
         viewHolderDevice.btn_auto_connect.setOnClickListener(v -> {
@@ -90,6 +88,7 @@ public class FastProvisionDeviceAdapter extends BaseAdapter {
         // send reset message
         MeshService.getInstance().sendMeshMessage(new NodeResetMessage(meshAdr));
         deviceInfo = TelinkMeshApplication.getInstance().getMeshInfo().getDeviceByMeshAddress(meshAdr);
+        Log.i(TAG, " device infor kickOut: " + deviceInfo.meshAddress);
         boolean kickDirect = deviceInfo.meshAddress == MeshService.getInstance().getDirectConnectedNodeAddress();
         if (!kickDirect) {
             delayHandler.postDelayed(new Runnable() {

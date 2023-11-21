@@ -2,9 +2,7 @@ package com.example.customtelinkapp.Service;
 
 import static com.example.customtelinkapp.Controller.FastProvisionController.lock;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -22,6 +20,7 @@ import androidx.core.app.NotificationCompat;
 import com.example.customtelinkapp.Controller.FastProvisionController;
 import com.example.customtelinkapp.MainActivity;
 import com.example.customtelinkapp.TelinkMeshApplication;
+import com.example.customtelinkapp.Util.Converter;
 import com.example.customtelinkapp.model.FUCache;
 import com.example.customtelinkapp.model.FUCacheService;
 import com.example.customtelinkapp.model.MeshInfo;
@@ -57,9 +56,6 @@ public class MyBleService extends Service implements EventListener<String> {
     private MeshInfo mesh;
     public static Context context;
     public FastProvisionController fastProvisionController;
-    private static final int OP_VENDOR_GET = 0x0211E0;
-    private static final int OP_VENDOR_STATUS = 0x0211E1;
-    private static final int REQUEST_CODE_LOCATION = 1001;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -175,20 +171,6 @@ public class MyBleService extends Service implements EventListener<String> {
 
                 }
             }
-//        } else if (event.getType().equals(ScanEvent.EVENT_TYPE_DEVICE_FOUND)) {
-//            AdvertisingDevice device = ((ScanEvent) event).getAdvertisingDevice();
-//            deviceProvisionController.onDeviceFound(device);
-//        } else if (event.getType().equals(ProvisioningEvent.EVENT_TYPE_PROVISION_BEGIN)) {
-//            deviceProvisionController.onProvisionStart((ProvisioningEvent) event);
-//        } else if (event.getType().equals(ProvisioningEvent.EVENT_TYPE_PROVISION_SUCCESS)) {
-//            deviceProvisionController.onProvisionSuccess((ProvisioningEvent) event);
-//        } else if (event.getType().equals(ProvisioningEvent.EVENT_TYPE_PROVISION_FAIL)) {
-//            deviceProvisionController.onProvisionFail((ProvisioningEvent) event);
-//            deviceProvisionController.provisionNext();
-//        } else if (event.getType().equals(BindingEvent.EVENT_TYPE_BIND_FAIL)) {
-//            deviceProvisionController.onKeyBindFail((BindingEvent) event);
-//        } else if (event.getType().equals(BindingEvent.EVENT_TYPE_BIND_SUCCESS)) {
-//            deviceProvisionController.onKeyBindSuccess((BindingEvent) event);
         } else if (event.getType().equals(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_ADDRESS_SET)) {
             fastProvisionController.onDeviceFound(((FastProvisioningEvent) event).getFastProvisioningDevice());
         } else if (event.getType().equals(FastProvisioningEvent.EVENT_TYPE_FAST_PROVISIONING_FAIL)) {
@@ -202,9 +184,8 @@ public class MyBleService extends Service implements EventListener<String> {
             int opcode = notificationMessage.getOpcode();
             byte[] params = notificationMessage.getParams();
 
-            Log.i("[secure response]", String.format("dest=%d, src=%d, opcode=%d, params=%s", dest, src, opcode, Arrays.toString(params)));
-
             if (opcode == OPCODE_SECURE_RESPONSE) {
+                Log.i("[secure response]", String.format("dest=%d, src=%d, opcode=%d, params=%s", dest, src, opcode, Arrays.toString(params)));
                 boolean isSuccess = checkSuccess(params);
                 Log.i(TAG, "secured success: " + isSuccess);
                 if (isSuccess) {
@@ -213,6 +194,12 @@ public class MyBleService extends Service implements EventListener<String> {
                     try {
                         for (SecurityDevice securityDevice : FastProvisionController.securityDeviceList) {
                             if (securityDevice.getNodeInfo().meshAddress == src) {
+                                try{
+                                    securityDevice.setVidDevice(Converter.byteArrayToInt(vid));
+                                    Log.i(TAG, "set vid: " + Converter.byteArrayToInt(vid));
+                                } catch (Exception e){
+                                    e.printStackTrace();
+                                }
                                 securityDevice.setSecured(true);
                                 break;
                             }

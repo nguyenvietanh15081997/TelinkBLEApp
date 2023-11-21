@@ -13,24 +13,16 @@ import android.widget.Button;
 import android.widget.ListView;
 
 import com.example.customtelinkapp.Controller.FastProvisionController;
-import com.example.customtelinkapp.Service.MqttService;
 import com.example.customtelinkapp.Service.MyBleService;
 import com.example.customtelinkapp.model.AppSettings;
 import com.example.customtelinkapp.model.FUCacheService;
 import com.example.customtelinkapp.model.MeshInfo;
 import com.example.customtelinkapp.model.NetworkingDevice;
 import com.example.customtelinkapp.model.NodeInfo;
-import com.telink.ble.mesh.core.Encipher;
 import com.telink.ble.mesh.foundation.MeshService;
 import com.telink.ble.mesh.foundation.parameter.AutoConnectParameters;
 import com.telink.ble.mesh.util.Arrays;
 import com.telink.ble.mesh.util.MeshLogger;
-
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 
 public class MainActivity extends AppCompatActivity {
     protected final String TAG = getClass().getSimpleName();
@@ -46,10 +38,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         lvDevices = findViewById(R.id.lv_devices);
-        fastProvisionDeviceAdapter = new FastProvisionDeviceAdapter(this,R.layout.fast_provisioning_device, FastProvisionController.devices);
+        fastProvisionDeviceAdapter = new FastProvisionDeviceAdapter(this,R.layout.fast_provisioning_device, TelinkMeshApplication.getInstance().getMeshInfo().nodes);
         lvDevices.setAdapter(fastProvisionDeviceAdapter);
-
-//        MqttService.getInstance().connect(getApplicationContext());
 
         // Kiểm tra xem ứng dụng đã có quyền ACCESS_FINE_LOCATION chưa
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -68,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 3);
         }
-//        startService(new Intent( this, MyBleService.class ) );
         btnFastProvision = findViewById(R.id.btnFastProvision);
         btnNewMesh = findViewById(R.id.btnNewMesh);
         btnProvision = findViewById(R.id.btnProvision);
@@ -84,15 +73,9 @@ public class MainActivity extends AppCompatActivity {
             MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfiguration());
         });
         btnProvision.setOnClickListener(v -> {
-            MeshInfo meshInfo = TelinkMeshApplication.getInstance().getMeshInfo();
-            for (NetworkingDevice networkingDevice : FastProvisionController.devices) {
-                Log.i(TAG, "appkey: " + meshInfo.getAppKeyStr());
-                Log.i(TAG, "netkey: " + meshInfo.getNetKeyStr());
-                Log.i(TAG, "devkey: " + Arrays.bytesToHexString(networkingDevice.nodeInfo.deviceKey));
-                Log.i(TAG, "ivIndev: " + meshInfo.ivIndex);
-                Log.i(TAG, "elementCount: " + networkingDevice.nodeInfo.elementCnt);
-                Log.i(TAG, "meshADR: " + networkingDevice.nodeInfo.meshAddress);
-            }
+            TelinkMeshApplication.getInstance().getMeshInfo().nodes
+                            .add(new NodeInfo());
+            fastProvisionDeviceAdapter.notifyDataSetChanged();
         });
     }
     public static void autoConnect() {
