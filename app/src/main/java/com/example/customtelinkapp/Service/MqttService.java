@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import com.example.customtelinkapp.Controller.DeviceProvisionController;
 import com.example.customtelinkapp.Controller.FastProvisionController;
+import com.example.customtelinkapp.DeviceListAdapter;
 import com.example.customtelinkapp.Service.Mqtt.CustomMqttCallback;
 import com.example.customtelinkapp.Service.Mqtt.MqttHandler;
 import com.example.customtelinkapp.TelinkMeshApplication;
@@ -144,6 +145,9 @@ public class MqttService {
         if(cmd.equals("startScanBle")){
             handleStartScan(jsonMessage);
         }
+        if(cmd.equals("kickDevice")){
+            handleKickOut(data.getInt("meshAdr"));
+        }
     }
     void handleInfoBLEResponse(JSONObject data) throws JSONException {
         int code = data.getInt("code");
@@ -172,7 +176,10 @@ public class MqttService {
         TelinkMeshApplication.getInstance().setupMesh(meshInfo);
         MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfiguration());
     }
-
+    void handleKickOut(int meshAdr){
+        Log.i(TAG, "kick device with mesh adr: " + meshAdr);
+        DeviceListAdapter.kickOut(meshAdr);
+    }
     public void callProvisionNormal(){
         JSONObject msgProvisionNormal = new JSONObject();
         try {

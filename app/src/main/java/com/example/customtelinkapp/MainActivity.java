@@ -3,6 +3,8 @@ package com.example.customtelinkapp;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.content.Intent;
@@ -10,37 +12,39 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
-import android.widget.ListView;
 
-import com.example.customtelinkapp.Controller.FastProvisionController;
 import com.example.customtelinkapp.Service.MyBleService;
 import com.example.customtelinkapp.model.AppSettings;
 import com.example.customtelinkapp.model.FUCacheService;
 import com.example.customtelinkapp.model.MeshInfo;
-import com.example.customtelinkapp.model.NetworkingDevice;
 import com.example.customtelinkapp.model.NodeInfo;
 import com.telink.ble.mesh.foundation.MeshService;
 import com.telink.ble.mesh.foundation.parameter.AutoConnectParameters;
-import com.telink.ble.mesh.util.Arrays;
 import com.telink.ble.mesh.util.MeshLogger;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     protected final String TAG = getClass().getSimpleName();
 
     private Button btnFastProvision, btnNewMesh, btnProvision;
-    public static FastProvisionDeviceAdapter fastProvisionDeviceAdapter;
-    ListView lvDevices;
+//    public static FastProvisionDeviceAdapter fastProvisionDeviceAdapter;
+    public static DeviceListAdapter deviceListAdapter;
+    RecyclerView lvDevices;
     public static final int LOCATION_PERMISSION_REQUEST_CODE = 1001; // Đây là request code
 
+    public List<NodeInfo> listDevices;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        listDevices = TelinkMeshApplication.getInstance().getMeshInfo().nodes;
         lvDevices = findViewById(R.id.lv_devices);
-        fastProvisionDeviceAdapter = new FastProvisionDeviceAdapter(this,R.layout.fast_provisioning_device, TelinkMeshApplication.getInstance().getMeshInfo().nodes);
-        lvDevices.setAdapter(fastProvisionDeviceAdapter);
 
+        deviceListAdapter = new DeviceListAdapter(this, listDevices);
+        lvDevices.setAdapter(deviceListAdapter);
+        lvDevices.setLayoutManager(new LinearLayoutManager(getApplication()));
+        deviceListAdapter.notifyDataSetChanged();
         // Kiểm tra xem ứng dụng đã có quyền ACCESS_FINE_LOCATION chưa
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // Yêu cầu quyền ACCESS_FINE_LOCATION từ người dùng
@@ -73,9 +77,7 @@ public class MainActivity extends AppCompatActivity {
             MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfiguration());
         });
         btnProvision.setOnClickListener(v -> {
-            TelinkMeshApplication.getInstance().getMeshInfo().nodes
-                            .add(new NodeInfo());
-            fastProvisionDeviceAdapter.notifyDataSetChanged();
+
         });
     }
     public static void autoConnect() {
@@ -96,6 +98,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public static void resetUI(){
+        deviceListAdapter.notifyDataSetChanged();
+    }
     @Override
     protected void onDestroy() {
         super.onDestroy();
