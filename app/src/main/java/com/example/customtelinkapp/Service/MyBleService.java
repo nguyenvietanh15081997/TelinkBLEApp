@@ -95,13 +95,13 @@ public class MyBleService extends Service implements EventListener<String> {
         TelinkMeshApplication.getInstance().addEventListener(StatusNotificationEvent.EVENT_TYPE_NOTIFICATION_MESSAGE_UNKNOWN, this);
 
 //        //connect mqtt
-        MqttService.getInstance().connect(getApplicationContext());
+//        MqttService.getInstance().connect(getApplicationContext());
 
         mesh = TelinkMeshApplication.getInstance().getMeshInfo();
         startMeshService();
         MainActivity.autoConnect();
-//        fastProvisionController = MqttService.fastProvisionController;
-//        fastProvisionController.actionStart();
+        fastProvisionController = MqttService.fastProvisionController;
+        fastProvisionController.actionStart();
 
         // returns the status
         // of the program

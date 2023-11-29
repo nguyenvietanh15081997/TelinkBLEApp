@@ -5,6 +5,7 @@ import android.util.Log;
 import android.util.SparseIntArray;
 
 import com.example.customtelinkapp.MainActivity;
+import com.example.customtelinkapp.Message.GroupMessage;
 import com.example.customtelinkapp.Message.SecurityMessage;
 import com.example.customtelinkapp.Service.MqttService;
 import com.example.customtelinkapp.TelinkMeshApplication;
@@ -120,28 +121,18 @@ public class FastProvisionController {
             MainActivity.autoConnect();
             meshInfo.saveOrUpdate(TelinkMeshApplication.getInstance());
         }
-        MqttService.getInstance().callProvisionNormal();
+//        MqttService.getInstance().callProvisionNormal();
         Log.i("TAG", "-- list size---: " + TelinkMeshApplication.getInstance().getMeshInfo().nodes.size());
         MainActivity.resetUI();
     }
 
-//    public int checkSecure(SecurityDevice securityDevice) {
-//        sendSecurityMessageByAddress(securityDevice.getNodeInfo().meshAddress, securityDevice.getNodeInfo().macAddress);
-//        final int[] rs = {0};
-//        new Handler().postDelayed(() -> {
-//            if (!securityDevice.getSecured()) {
-//                rs[0] = 1;
-//            }
-//        }, 400);
-//        return rs[0];
-//    }
     public void checkSecure(SecurityDevice securityDevice) {
         sendSecurityMessageByAddress(securityDevice.getNodeInfo().meshAddress, securityDevice.getNodeInfo().macAddress);
 
         new Handler().postDelayed(() -> {
             if (securityDevice.getSecured()) {
                 securityDevice.getNodeInfo().setIsSecured(false); // Cập nhật trạng thái bảo mật
-                sendNewDeviceToHC(securityDevice); // Gửi thiết bị mới đến trung tâm điều khiển
+//                sendNewDeviceToHC(securityDevice); // Gửi thiết bị mới đến trung tâm điều khiển
             } else {
                 // Nếu thiết bị không được bảo mật sau 400ms, có thể thực hiện các bước cần thiết
 
@@ -149,6 +140,16 @@ public class FastProvisionController {
         }, 400);
     }
 
+    public void checkGroup(SecurityDevice securityDevice){
+        sendGroupMessage(securityDevice.getNodeInfo().meshAddress);
+        new Handler().postDelayed(() -> {
+            if (securityDevice.getSecured()) {
+
+            } else {
+
+            }
+        }, 400);
+    }
 
     public void startSecureDevice() {
         Log.i("TAG", "startSecureDevice");
@@ -163,10 +164,11 @@ public class FastProvisionController {
         commonElements.retainAll(listDeviceFound);
 
         for (NodeInfo nodeInfo : commonElements) {
-            SecurityDevice securityDevice = new SecurityDevice(nodeInfo, false, 4, nodeInfo.compositionData.vid);
+            SecurityDevice securityDevice = new SecurityDevice(nodeInfo, false, 4, nodeInfo.compositionData.vid, false);
             lock.lock();
             try {
                 securityDeviceList.add(securityDevice);
+                MainActivity.deviceListAdapter.notifyDataSetChanged();
             } finally {
                 lock.unlock();
             }
@@ -186,6 +188,12 @@ public class FastProvisionController {
         byte[] paramPrefixes = Arrays.reverse(Arrays.hexToBytes(PARAMS_PREFIXES));
         SecurityMessage securityMessage = new SecurityMessage(meshAddress, concatenateArrays(paramPrefixes, getLastElements(re, 6)));
         MeshService.getInstance().sendMeshMessage(securityMessage);
+    }
+
+    public void sendGroupMessage(int meshAddress){
+        GroupMessage groupMessage = new GroupMessage(meshAddress);
+        MeshService.getInstance().sendMeshMessage(groupMessage);
+
     }
 
     public void sendNewDeviceToHC(SecurityDevice securityDevice) {

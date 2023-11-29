@@ -12,6 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.customtelinkapp.model.NetworkingDevice;
 import com.example.customtelinkapp.model.NodeInfo;
 import com.telink.ble.mesh.core.message.config.NodeResetMessage;
 import com.telink.ble.mesh.foundation.MeshService;
@@ -23,9 +24,9 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Vi
     private static NodeInfo deviceInfo;
     private static Handler delayHandler = new Handler();
     private Context mContext;
-    private List<NodeInfo> listDevice;
+    private List<NetworkingDevice> listDevice;
 
-    public DeviceListAdapter(Context mContext, List<NodeInfo> listDevice) {
+    public DeviceListAdapter(Context mContext, List<NetworkingDevice> listDevice) {
         this.mContext = mContext;
         this.listDevice = listDevice;
     }
@@ -40,13 +41,13 @@ public class DeviceListAdapter extends RecyclerView.Adapter<DeviceListAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        NodeInfo device = listDevice.get(position);
+        NetworkingDevice device = listDevice.get(position);
 
-        holder.tvMacDevice.setText(device.macAddress);
-        holder.tvMeshAdr.setText(String.valueOf(device.meshAddress));
+        holder.tvMacDevice.setText(device.nodeInfo.macAddress);
+        holder.tvMeshAdr.setText(String.valueOf(device.nodeInfo.meshAddress));
 
         holder.btn_kick_out.setOnClickListener(v -> {
-            kickOut(device.meshAddress);
+            kickOut(device.nodeInfo.meshAddress);
                 listDevice.remove(position);
                 notifyDataSetChanged();
         });
