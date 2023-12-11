@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.customtelinkapp'
+    namespace 'vn.com.rangdong.fastscan'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.customtelinkapp"
+        applicationId "vn.com.rangdong.fastscan"
         minSdk 21
         targetSdk 31
         versionCode 1
