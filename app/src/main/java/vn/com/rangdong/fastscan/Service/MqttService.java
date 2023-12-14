@@ -37,7 +37,7 @@ public class MqttService {
     public static final String mqttUsername = "RD";
     public static final String mqttPassword = "";
     //    // mqtt topic
-    public static final String topicSend = "device/androidBle";
+    public static final String topicSend = "androidBle/HC";
     public static final String topicReceive = "HC/androidBle";
     DeviceProvisionController deviceProvisionController = new DeviceProvisionController();
     public static FastProvisionController fastProvisionController = new FastProvisionController();
@@ -59,10 +59,12 @@ public class MqttService {
                 if (!reconnect) {
                     mqttHandler.subscribe(topicReceive);
                     requestBLEInfor();
-                    Toast.makeText(context, "KẾT NỐI THÀNH CÔNG", Toast.LENGTH_LONG).show();
+                    Log.i(TAG, "Connect MQTT complete");
+//                    Toast.makeText(context, "KẾT NỐI THÀNH CÔNG", Toast.LENGTH_LONG).show();
                 } else {
                     mqttHandler.subscribe(topicReceive);
-                    Toast.makeText(context, "MẤT KẾT NỐI", Toast.LENGTH_LONG).show();
+                    Log.i(TAG, "Disconnect to MQTT broker");
+//                    Toast.makeText(context, "MẤT KẾT NỐI", Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -153,6 +155,9 @@ public class MqttService {
         if (cmd.equals("kickDevice")) {
             handleKickOut(data.getInt("meshAdr"));
         }
+        if (cmd.equals("stopScanBle")) {
+            handleStopScan();
+        }
     }
 
     void handleInfoBLEResponse(JSONObject data) throws JSONException {
@@ -190,6 +195,9 @@ public class MqttService {
         DeviceListAdapter.kickOut(meshAdr);
     }
 
+    void handleStopScan(){
+        MeshService.getInstance().stopScan();
+    }
     public void callProvisionNormal() {
         JSONObject msgProvisionNormal = new JSONObject();
         try {

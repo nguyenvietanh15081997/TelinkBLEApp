@@ -1,6 +1,7 @@
 package vn.com.rangdong.fastscan.Controller;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.util.SparseIntArray;
 
@@ -121,32 +122,22 @@ public class FastProvisionController {
             meshInfo.saveOrUpdate(TelinkMeshApplication.getInstance());
         }
         MqttService.getInstance().callProvisionNormal();
-        Log.i("TAG", "-- list size---: " + TelinkMeshApplication.getInstance().getMeshInfo().nodes.size());
-        MainActivity.resetUI();
+        Log.i("TAG", "-- number of device ---: " + TelinkMeshApplication.getInstance().getMeshInfo().nodes.size());
+//        MainActivity.resetUI();
     }
 
-    //    public int checkSecure(SecurityDevice securityDevice) {
-//        sendSecurityMessageByAddress(securityDevice.getNodeInfo().meshAddress, securityDevice.getNodeInfo().macAddress);
-//        final int[] rs = {0};
-//        new Handler().postDelayed(() -> {
-//            if (!securityDevice.getSecured()) {
-//                rs[0] = 1;
-//            }
-//        }, 400);
-//        return rs[0];
-//    }
     public void checkSecure(SecurityDevice securityDevice) {
         sendSecurityMessageByAddress(securityDevice.getNodeInfo().meshAddress, securityDevice.getNodeInfo().macAddress);
-
-        new Handler().postDelayed(() -> {
-            if (securityDevice.getSecured()) {
-                securityDevice.getNodeInfo().setIsSecured(false); // Cập nhật trạng thái bảo mật
-                sendNewDeviceToHC(securityDevice); // Gửi thiết bị mới đến trung tâm điều khiển
-            } else {
-                // Nếu thiết bị không được bảo mật sau 400ms, có thể thực hiện các bước cần thiết
-
-            }
-        }, 400);
+//        new Handler().postDelayed(() -> {
+//            Log.i("TAG", "check secure: " +securityDevice.getSecured());
+//            if (securityDevice.getSecured()) {
+//                sendNewDeviceToHC(securityDevice); // Gửi thiết bị mới đến trung tâm điều khiển
+//                securityDevice.getNodeInfo().setIsSecured(false); // Cập nhật trạng thái bảo mật
+//            } else {
+//                // Nếu thiết bị không được bảo mật sau 400ms, có thể thực hiện các bước cần thiết
+//
+//            }
+//        }, 400);
     }
 
 
@@ -162,15 +153,24 @@ public class FastProvisionController {
 
         commonElements.retainAll(listDeviceFound);
 
-        for (NodeInfo nodeInfo : commonElements) {
-            SecurityDevice securityDevice = new SecurityDevice(nodeInfo, false, 4, nodeInfo.compositionData.vid);
+        final int DELAY_BETWEEN_DEVICES = 500;
+        final Handler handler = new Handler(Looper.getMainLooper());
+
+
+        for (int i = 0; i < commonElements.size(); i++) {
+            SecurityDevice securityDevice = new SecurityDevice(commonElements.get(i), false, 4, commonElements.get(i).compositionData.vid);
             lock.lock();
             try {
                 securityDeviceList.add(securityDevice);
             } finally {
                 lock.unlock();
             }
-            checkSecure(securityDevice);
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    checkSecure(securityDevice);
+                }
+            }, i * DELAY_BETWEEN_DEVICES);
         }
         FastProvisionController.isSendSecurity = false;
     }

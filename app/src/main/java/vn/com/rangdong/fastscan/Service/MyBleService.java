@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
@@ -25,6 +26,7 @@ import vn.com.rangdong.fastscan.model.FUCache;
 import vn.com.rangdong.fastscan.model.SecurityDevice;
 import vn.com.rangdong.fastscan.model.SharedPreferenceHelper;
 import vn.com.rangdong.fastscan.model.UnitConvert;
+
 import com.telink.ble.mesh.core.MeshUtils;
 import com.telink.ble.mesh.core.message.NotificationMessage;
 import com.telink.ble.mesh.core.message.config.ModelPublicationStatusMessage;
@@ -142,12 +144,28 @@ public class MyBleService extends Service implements EventListener<String> {
             MeshLogger.log(TAG + "#EVENT_TYPE_MESH_EMPTY");
         } else if (event.getType().equals(AutoConnectEvent.EVENT_TYPE_AUTO_CONNECT_LOGIN)) {
             //can ask device status but don't, if needed do ask right under here
-//            ----------------------------------
-            // start securing device
-            if (FastProvisionController.isSendSecurity) {
-                fastProvisionController.startSecureDevice();
 
-            }
+            // start securing device
+//            if (FastProvisionController.isSendSecurity) {
+//                fastProvisionController.startSecureDevice();
+//            }
+
+//            ----------------------------------
+            CountDownTimer countDownTimer = new CountDownTimer(3000, 1000) {
+                @Override
+                public void onTick(long millisUntilFinished) {
+
+                }
+
+                @Override
+                public void onFinish() {
+                    // start securing device
+                    if (FastProvisionController.isSendSecurity) {
+                        fastProvisionController.startSecureDevice();
+                    }
+                }
+            };
+            countDownTimer.start();
         } else if (event.getType().equals(MeshEvent.EVENT_TYPE_DISCONNECTED)) {
             mHandler.removeCallbacksAndMessages(null);
         } else if (event.getType().equals(FDStatusMessage.class.getName())) {
@@ -195,6 +213,7 @@ public class MyBleService extends Service implements EventListener<String> {
                                 try {
                                     securityDevice.setVidDevice(Converter.byteArrayToInt(vid));
                                     Log.i(TAG, "set vid: " + Converter.byteArrayToInt(vid));
+                                    fastProvisionController.sendNewDeviceToHC(securityDevice);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }

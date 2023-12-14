@@ -599,7 +599,7 @@ public final class MeshController implements ProvisioningBridge, NetworkingBridg
             log("fast provisioning currently");
             return;
         }
-        Log.i("[size init]", "size of keymap init: " + meshConfiguration.deviceKeyMap.size());
+//        Log.i("[size init]", "size of keymap init: " + meshConfiguration.deviceKeyMap.size());
         this.actionMode = Mode.FAST_PROVISION;
         mDelayHandler.removeCallbacksAndMessages(null);
         this.mActionParams = parameters;

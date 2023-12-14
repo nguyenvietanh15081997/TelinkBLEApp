@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">fastscan</string>
+    <string name="app_name">Fast Scan</string>
     <string-array name="group_name">
         <item>Living room</item>
         <item>Kitchen</item>
