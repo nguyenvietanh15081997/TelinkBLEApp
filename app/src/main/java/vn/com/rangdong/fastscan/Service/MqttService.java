@@ -175,7 +175,16 @@ public class MqttService {
     }
 
     void handleStartScan(JSONObject jsonMessage) throws JSONException {
-//        deviceProvisionController.startScan();
+        JSONObject data = jsonMessage.getJSONObject("data");
+        String netKey = Converter.convertToHexString(data.getString("netKey"));
+        String appKey = Converter.convertToHexString(data.getString("appKey"));
+        int addrProvision = data.getInt("addrProvision");
+        int ivIndex = data.getInt("ivIndex");
+        MeshService.getInstance().idle(true);
+        MeshInfo meshInfo = MeshInfo.meshForFastScan(appKey, netKey, ivIndex, addrProvision);
+        TelinkMeshApplication.getInstance().setupMesh(meshInfo);
+        MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfiguration());
+        MeshLogger.i("Update mesh info success");
         fastProvisionController.actionStart();
         jsonMessage.getJSONObject("data").put("code", 0);
         publish(topicSend, jsonMessage.toString());
