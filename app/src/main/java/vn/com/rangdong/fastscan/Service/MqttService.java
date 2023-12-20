@@ -2,7 +2,7 @@ package vn.com.rangdong.fastscan.Service;
 
 import android.content.Context;
 import android.util.Log;
-import android.widget.Toast;
+import android.util.SparseIntArray;
 
 import vn.com.rangdong.fastscan.DeviceListAdapter;
 import vn.com.rangdong.fastscan.TelinkMeshApplication;
@@ -21,6 +21,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.Iterator;
 
 public class MqttService {
     public final String TAG = "MqttService";
@@ -178,14 +180,17 @@ public class MqttService {
         JSONObject data = jsonMessage.getJSONObject("data");
         String netKey = Converter.convertToHexString(data.getString("netKey"));
         String appKey = Converter.convertToHexString(data.getString("appKey"));
-        int addrProvision = data.getInt("addrProvision");
+        int addProvision = data.getInt("addProvision");
         int ivIndex = data.getInt("ivIndex");
+        JSONObject mapTypeElement= data.getJSONObject("mapTypeElement");
         MeshService.getInstance().idle(true);
-        MeshInfo meshInfo = MeshInfo.meshForFastScan(appKey, netKey, ivIndex, addrProvision);
+        MeshInfo meshInfo = MeshInfo.meshForFastScan(appKey, netKey, ivIndex, addProvision);
         TelinkMeshApplication.getInstance().setupMesh(meshInfo);
         MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfiguration());
         MeshLogger.i("Update mesh info success");
-        fastProvisionController.actionStart();
+        //call scan
+        SparseIntArray targetDevicePid = setTargetDevicePid(mapTypeElement);
+        fastProvisionController.actionStart(targetDevicePid);
         jsonMessage.getJSONObject("data").put("code", 0);
         publish(topicSend, jsonMessage.toString());
     }
@@ -217,5 +222,31 @@ public class MqttService {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+    public SparseIntArray setTargetDevicePid (JSONObject mapTypeElement) {
+        SparseIntArray targetDevicePid = new SparseIntArray();
+        // Duyệt qua từng phần tử trong "mapTypeElement"
+        for (Iterator<String> it = mapTypeElement.keys(); it.hasNext(); ) {
+            String key = it.next();
+            try {
+                int value = mapTypeElement.getInt(key);
+                byte[] result = Converter.convertToTwoBytes(Integer.parseInt(key));
+                // Ghép 2 byte thành một chuỗi
+                int demicalNumber1 = result[0];
+                String hexString2 = Integer.toHexString(result[1]);
+                if (hexString2.length() == 1) {
+                    hexString2 = "0" + hexString2;
+                }
+                String resultString = String.valueOf(demicalNumber1) + hexString2;
+                Log.i(TAG, "Result String: " + resultString);
+                int pidKey = Integer.parseInt(resultString,16);
+                targetDevicePid.put(pidKey, value);
+                System.out.println("pidKey: " + pidKey + ", Value: " + value);
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        return targetDevicePid;
     }
 }

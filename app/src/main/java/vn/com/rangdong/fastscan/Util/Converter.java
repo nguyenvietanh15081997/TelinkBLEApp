@@ -1,5 +1,9 @@
 package vn.com.rangdong.fastscan.Util;
 
+import android.util.Log;
+
+import java.util.Arrays;
+
 public class Converter {
     public static String convertToUUID(String input) {
 
@@ -40,6 +44,16 @@ public class Converter {
             result |= (bytes[i] & 0xFF) << ((bytes.length - 1 - i) * 8);
         }
 
+        return result;
+    }
+
+    public static byte[] convertToTwoBytes(int number) {
+        byte[] result = new byte[2];
+        // Lấy 2 chữ số đầu
+        result[0] = (byte) ((number / 1000) & 0xFF);
+
+        // Lấy 3 chữ số sau
+        result[1] = (byte) (number % 1000 & 0xFF);
         return result;
     }
 

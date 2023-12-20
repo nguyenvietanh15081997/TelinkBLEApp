@@ -47,20 +47,19 @@ public class FastProvisionController {
 
     public PrivateDevice[] targetDevices = PrivateDevice.values();
 
-    public void actionStart() {
+    public void actionStart(SparseIntArray targetDevicePid) {
         devices.clear();
         securityDeviceList.clear();
-        MeshLogger.i("In action start");
         isSendSecurity = true;
         MeshLogger.i(String.valueOf(meshInfo));
         int provisionIndex = meshInfo.getProvisionIndex();
-        SparseIntArray targetDevicePid = new SparseIntArray(targetDevices.length);
+//        SparseIntArray targetDevicePid = new SparseIntArray(targetDevices.length);
 
-        CompositionData compositionData;
-        for (PrivateDevice privateDevice : targetDevices) {
-            compositionData = CompositionData.from(privateDevice.getCpsData());
-            targetDevicePid.put(privateDevice.getPid(), compositionData.elements.size());
-        }
+//        CompositionData compositionData;
+//        for (PrivateDevice privateDevice : targetDevices) {
+//            compositionData = CompositionData.from(privateDevice.getCpsData());
+//            targetDevicePid.put(privateDevice.getPid(), compositionData.elements.size());
+//        }
         MeshService.getInstance().startFastProvision(new FastProvisioningParameters(FastProvisioningConfiguration.getDefault(
                 provisionIndex,
                 targetDevicePid

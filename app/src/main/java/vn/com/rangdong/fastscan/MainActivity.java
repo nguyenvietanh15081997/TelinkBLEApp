@@ -15,6 +15,7 @@ import android.widget.Button;
 
 import vn.com.rangdong.fastscan.R;
 
+import vn.com.rangdong.fastscan.Util.Converter;
 import vn.com.rangdong.fastscan.model.FUCacheService;
 import vn.com.rangdong.fastscan.Service.MyBleService;
 import vn.com.rangdong.fastscan.model.AppSettings;
@@ -22,6 +23,7 @@ import vn.com.rangdong.fastscan.model.MeshInfo;
 import vn.com.rangdong.fastscan.model.NodeInfo;
 import com.telink.ble.mesh.foundation.MeshService;
 import com.telink.ble.mesh.foundation.parameter.AutoConnectParameters;
+import com.telink.ble.mesh.util.Arrays;
 import com.telink.ble.mesh.util.MeshLogger;
 
 import java.util.List;
@@ -80,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
             MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfiguration());
         });
         btnProvision.setOnClickListener(v -> {
-
+//            Log.i(TAG, "onCreate: " + Arrays.bytesToHexString([0x]));
         });
     }
 
