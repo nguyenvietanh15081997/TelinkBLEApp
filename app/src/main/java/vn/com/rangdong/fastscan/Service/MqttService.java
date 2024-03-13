@@ -228,20 +228,37 @@ public class MqttService {
         // Duyệt qua từng phần tử trong "mapTypeElement"
         for (Iterator<String> it = mapTypeElement.keys(); it.hasNext(); ) {
             String key = it.next();
+            Log.i(TAG, "key: " + key);
             try {
-                int value = mapTypeElement.getInt(key);
-                byte[] result = Converter.convertToTwoBytes(Integer.parseInt(key));
-                // Ghép 2 byte thành một chuỗi
-                int demicalNumber1 = result[0];
-                String hexString2 = Integer.toHexString(result[1]);
-                if (hexString2.length() == 1) {
-                    hexString2 = "0" + hexString2;
+                JSONArray value = mapTypeElement.getJSONArray(key);
+                // Duyệt qua từng phần tử trong JSONArray
+                for (int i = 0; i < value.length(); i++) {
+                    int element = value.getInt(i);
+                    byte[] result = Converter.convertToTwoBytes(Integer.parseInt(String.valueOf(element)));
+                    // Ghép 2 byte thành một chuỗi
+                    int demicalNumber1 = result[0];
+                    String hexString2 = Integer.toHexString(result[1]);
+                    if (hexString2.length() == 1) {
+                        hexString2 = "0" + hexString2;
+                    }
+                    String resultString = demicalNumber1 + hexString2;
+                    Log.i(TAG, "Result String: " + resultString);
+                    int pidKey = Integer.parseInt(resultString,16);
+                    targetDevicePid.put(pidKey, Integer.parseInt(key));
+                    System.out.println("pidKey: " + pidKey + ", Value: " + key);
                 }
-                String resultString = String.valueOf(demicalNumber1) + hexString2;
-                Log.i(TAG, "Result String: " + resultString);
-                int pidKey = Integer.parseInt(resultString,16);
-                targetDevicePid.put(pidKey, value);
-                System.out.println("pidKey: " + pidKey + ", Value: " + value);
+//                byte[] result = Converter.convertToTwoBytes(Integer.parseInt(key));
+//                // Ghép 2 byte thành một chuỗi
+//                int demicalNumber1 = result[0];
+//                String hexString2 = Integer.toHexString(result[1]);
+//                if (hexString2.length() == 1) {
+//                    hexString2 = "0" + hexString2;
+//                }
+//                String resultString = demicalNumber1 + hexString2;
+//                Log.i(TAG, "Result String: " + resultString);
+//                int pidKey = Integer.parseInt(resultString,16);
+//                targetDevicePid.put(pidKey, value);
+//                System.out.println("pidKey: " + pidKey + ", Value: " + value);
             }
             catch (Exception e){
                 e.printStackTrace();

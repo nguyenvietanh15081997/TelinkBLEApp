@@ -208,7 +208,7 @@ public class MyBleService extends Service implements EventListener<String> {
                     byte[] vid = getVid(params);
                     FastProvisionController.lock.lock();
                     try {
-                        for (SecurityDevice securityDevice : FastProvisionController.securityDeviceList) {
+                        for (SecurityDevice securityDevice : FastProvisionController. securityDeviceList) {
                             if (securityDevice.getNodeInfo().meshAddress == src) {
                                 try {
                                     securityDevice.setVidDevice(Converter.byteArrayToInt(vid));

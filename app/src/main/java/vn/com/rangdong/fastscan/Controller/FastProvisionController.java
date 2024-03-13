@@ -127,16 +127,6 @@ public class FastProvisionController {
 
     public void checkSecure(SecurityDevice securityDevice) {
         sendSecurityMessageByAddress(securityDevice.getNodeInfo().meshAddress, securityDevice.getNodeInfo().macAddress);
-//        new Handler().postDelayed(() -> {
-//            Log.i("TAG", "check secure: " +securityDevice.getSecured());
-//            if (securityDevice.getSecured()) {
-//                sendNewDeviceToHC(securityDevice); // Gửi thiết bị mới đến trung tâm điều khiển
-//                securityDevice.getNodeInfo().setIsSecured(false); // Cập nhật trạng thái bảo mật
-//            } else {
-//                // Nếu thiết bị không được bảo mật sau 400ms, có thể thực hiện các bước cần thiết
-//
-//            }
-//        }, 400);
     }
 
 
@@ -157,19 +147,18 @@ public class FastProvisionController {
 
 
         for (int i = 0; i < commonElements.size(); i++) {
-            SecurityDevice securityDevice = new SecurityDevice(commonElements.get(i), false, 4, commonElements.get(i).compositionData.vid);
+            int vidDevice = 0x0211;
+            if(commonElements.get(i).compositionData != null){
+                vidDevice = commonElements.get(i).compositionData.vid;
+            }
+            SecurityDevice securityDevice = new SecurityDevice(commonElements.get(i), false, 4, vidDevice);
             lock.lock();
             try {
                 securityDeviceList.add(securityDevice);
             } finally {
                 lock.unlock();
             }
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    checkSecure(securityDevice);
-                }
-            }, i * DELAY_BETWEEN_DEVICES);
+            handler.postDelayed(() -> checkSecure(securityDevice), (long) i * DELAY_BETWEEN_DEVICES);
         }
         FastProvisionController.isSendSecurity = false;
     }
