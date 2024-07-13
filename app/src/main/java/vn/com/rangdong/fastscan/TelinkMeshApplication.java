@@ -217,8 +217,8 @@ public class TelinkMeshApplication extends MeshApplication {
     }
 
     public void setupMesh(MeshInfo mesh) {
-        MeshLogger.d("setup mesh info: " + meshInfo.toString());
-        this.meshInfo = mesh;
+        MeshLogger.d("setup mesh info: " + mesh.toString());
+        meshInfo = mesh;
         dispatchEvent(new MeshEvent(this, MeshEvent.EVENT_TYPE_MESH_RESET, "mesh reset"));
     }
 

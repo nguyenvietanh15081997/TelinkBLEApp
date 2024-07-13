@@ -48,18 +48,13 @@ public class FastProvisionController {
     public PrivateDevice[] targetDevices = PrivateDevice.values();
 
     public void actionStart(SparseIntArray targetDevicePid) {
+        meshInfo = TelinkMeshApplication.getInstance().getMeshInfo();
         devices.clear();
         securityDeviceList.clear();
         isSendSecurity = true;
         MeshLogger.i(String.valueOf(meshInfo));
         int provisionIndex = meshInfo.getProvisionIndex();
-//        SparseIntArray targetDevicePid = new SparseIntArray(targetDevices.length);
 
-//        CompositionData compositionData;
-//        for (PrivateDevice privateDevice : targetDevices) {
-//            compositionData = CompositionData.from(privateDevice.getCpsData());
-//            targetDevicePid.put(privateDevice.getPid(), compositionData.elements.size());
-//        }
         MeshService.getInstance().startFastProvision(new FastProvisioningParameters(FastProvisioningConfiguration.getDefault(
                 provisionIndex,
                 targetDevicePid
@@ -81,6 +76,7 @@ public class FastProvisionController {
             nodeInfo.elementCnt = fastProvisioningDevice.getElementCount();
             nodeInfo.compositionData = getCompositionData(fastProvisioningDevice.getPid());
             nodeInfo.deviceUUID = Encipher.calcUuidByMac(fastProvisioningDevice.getMac());
+            nodeInfo.pid = fastProvisioningDevice.getPid();
 
             NetworkingDevice device = new NetworkingDevice(nodeInfo);
             device.state = NetworkingState.PROVISIONING;
@@ -181,7 +177,7 @@ public class FastProvisionController {
         NodeInfo nodeInfo = securityDevice.getNodeInfo();
         MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(nodeInfo.deviceUUID), nodeInfo.macAddress,
                 Arrays.bytesToHexString(nodeInfo.deviceKey), securityDevice.getVidDevice(),
-                nodeInfo.compositionData.pid, nodeInfo.meshAddress);
+                nodeInfo.pid, nodeInfo.meshAddress);
     }
 
     public static byte[] concatenateArrays(byte[] array1, byte[] array2) {

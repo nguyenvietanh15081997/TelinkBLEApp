@@ -122,7 +122,7 @@ public class MqttService {
 
             // Tạo đối tượng JSONObject con data trong device
             JSONObject dataInnerObject = new JSONObject();
-            dataInnerObject.put("deviceKey", Converter.convertToUUID(deviceKey).toLowerCase());
+            dataInnerObject.put("devicekey", Converter.convertToUUID(deviceKey).toLowerCase());
             dataInnerObject.put("vid", vid); // Giá trị int tùy chọn
             dataInnerObject.put("pid", pid); // Giá trị int tùy chọn
 
@@ -181,12 +181,13 @@ public class MqttService {
         String netKey = Converter.convertToHexString(data.getString("netKey"));
         String appKey = Converter.convertToHexString(data.getString("appKey"));
         int addProvision = data.getInt("addProvision");
+        Log.i(TAG, "addProvision: " + addProvision);
         int ivIndex = data.getInt("ivIndex");
         JSONObject mapTypeElement= data.getJSONObject("mapTypeElement");
         MeshService.getInstance().idle(true);
         MeshInfo meshInfo = MeshInfo.meshForFastScan(appKey, netKey, ivIndex, addProvision);
         TelinkMeshApplication.getInstance().setupMesh(meshInfo);
-        MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfiguration());
+        MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfigurationWithLocalAddress(addProvision));
         MeshLogger.i("Update mesh info success");
         //call scan
         SparseIntArray targetDevicePid = setTargetDevicePid(mapTypeElement);
@@ -228,7 +229,6 @@ public class MqttService {
         // Duyệt qua từng phần tử trong "mapTypeElement"
         for (Iterator<String> it = mapTypeElement.keys(); it.hasNext(); ) {
             String key = it.next();
-            Log.i(TAG, "key: " + key);
             try {
                 JSONArray value = mapTypeElement.getJSONArray(key);
                 // Duyệt qua từng phần tử trong JSONArray
@@ -247,18 +247,6 @@ public class MqttService {
                     targetDevicePid.put(pidKey, Integer.parseInt(key));
                     System.out.println("pidKey: " + pidKey + ", Value: " + key);
                 }
-//                byte[] result = Converter.convertToTwoBytes(Integer.parseInt(key));
-//                // Ghép 2 byte thành một chuỗi
-//                int demicalNumber1 = result[0];
-//                String hexString2 = Integer.toHexString(result[1]);
-//                if (hexString2.length() == 1) {
-//                    hexString2 = "0" + hexString2;
-//                }
-//                String resultString = demicalNumber1 + hexString2;
-//                Log.i(TAG, "Result String: " + resultString);
-//                int pidKey = Integer.parseInt(resultString,16);
-//                targetDevicePid.put(pidKey, value);
-//                System.out.println("pidKey: " + pidKey + ", Value: " + value);
             }
             catch (Exception e){
                 e.printStackTrace();

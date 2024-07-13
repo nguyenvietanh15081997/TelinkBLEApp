@@ -139,7 +139,7 @@ public class MyBleService extends Service implements EventListener<String> {
     @SuppressLint("DefaultLocale")
     @Override
     public void performed(Event<String> event) {
-        Log.i(TAG, "thinpv performed: " + event.getType());
+        Log.i(TAG, "performed: " + event.getType());
         if (event.getType().equals(MeshEvent.EVENT_TYPE_MESH_EMPTY)) {
             MeshLogger.log(TAG + "#EVENT_TYPE_MESH_EMPTY");
         } else if (event.getType().equals(AutoConnectEvent.EVENT_TYPE_AUTO_CONNECT_LOGIN)) {

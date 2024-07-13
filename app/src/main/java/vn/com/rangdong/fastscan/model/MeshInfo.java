@@ -363,6 +363,34 @@ public class MeshInfo implements Serializable, Cloneable {
         return meshConfiguration;
     }
 
+    public MeshConfiguration convertToConfigurationWithLocalAddress(Integer localAddress) {
+        MeshConfiguration meshConfiguration = new MeshConfiguration();
+        meshConfiguration.deviceKeyMap = new SparseArray<>();
+        if (nodes != null) {
+            for (NodeInfo node : nodes) {
+                meshConfiguration.deviceKeyMap.put(node.meshAddress, node.deviceKey);
+            }
+        }
+        MeshNetKey netKey = getDefaultNetKey();
+        meshConfiguration.netKeyIndex = netKey.index;
+        meshConfiguration.networkKey = netKey.key;
+
+        meshConfiguration.appKeyMap = new SparseArray<>();
+        if (appKeyList != null) {
+            for (MeshAppKey appKey :
+                    appKeyList) {
+                meshConfiguration.appKeyMap.put(appKey.index, appKey.key);
+            }
+        }
+
+        meshConfiguration.ivIndex = ivIndex;
+
+        meshConfiguration.sequenceNumber = sequenceNumber;
+
+        meshConfiguration.localAddress = localAddress;
+        return meshConfiguration;
+    }
+
 
     public static MeshInfo createNewMesh(Context context) {
         // 0x7FFF

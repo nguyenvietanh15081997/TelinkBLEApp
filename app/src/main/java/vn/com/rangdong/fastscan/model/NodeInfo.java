@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NodeInfo implements Serializable {
+    public int pid = 0;
 
     public boolean isSecured = false;
     /**
