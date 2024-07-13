@@ -482,21 +482,17 @@ public class NetworkingController {
     public boolean sendMeshMessage(MeshMessage meshMessage) {
 
         int dst = meshMessage.getDestinationAddress();
-        MeshLogger.i(String.valueOf(dst));
         if (!validateDestinationAddress(dst)) {
             log("invalid dst address: " + String.format("%04X", dst), MeshLogger.LEVEL_WARN);
             return false;
         }
 
         AccessType accessType = meshMessage.getAccessType();
-        MeshLogger.i(String.valueOf(accessType));
         byte[] encryptionKey;
         if (accessType == AccessType.APPLICATION) {
             encryptionKey = getAppKey(meshMessage.getAppKeyIndex());
-            MeshLogger.i(String.valueOf(encryptionKey));
         } else {
             encryptionKey = getDeviceKey(meshMessage.getDestinationAddress());
-            MeshLogger.i("else" + java.util.Arrays.toString(encryptionKey));
         }
 
         if (encryptionKey == null) {
@@ -504,8 +500,6 @@ public class NetworkingController {
             return false;
         }
         meshMessage.setAccessKey(encryptionKey);
-
-
         return postMeshMessage(meshMessage, false);
     }
 

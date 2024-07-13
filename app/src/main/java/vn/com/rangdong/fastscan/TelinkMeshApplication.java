@@ -40,7 +40,7 @@ public class TelinkMeshApplication extends MeshApplication {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.i(TAG, "onCreate: ");
+        Log.i(TAG, "App Version: " + this.getString(com.example.telinkblemeshlib.R.string.app_version));
         mThis = this;
         HandlerThread offlineCheckThread = new HandlerThread("offline check thread");
         offlineCheckThread.start();

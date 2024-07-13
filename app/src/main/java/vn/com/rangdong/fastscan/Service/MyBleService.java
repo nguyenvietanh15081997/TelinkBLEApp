@@ -212,7 +212,7 @@ public class MyBleService extends Service implements EventListener<String> {
                             if (securityDevice.getNodeInfo().meshAddress == src) {
                                 try {
                                     securityDevice.setVidDevice(Converter.byteArrayToInt(vid));
-                                    Log.i(TAG, "set vid: " + Converter.byteArrayToInt(vid));
+//                                    Log.i(TAG, "set vid: " + Converter.byteArrayToInt(vid));
                                     fastProvisionController.sendNewDeviceToHC(securityDevice);
                                 } catch (Exception e) {
                                     e.printStackTrace();

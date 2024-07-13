@@ -173,9 +173,10 @@ public class FastProvisionController {
     }
 
     public void sendNewDeviceToHC(SecurityDevice securityDevice) {
-        Log.i("TAG", "vid send: " + securityDevice.getVidDevice());
+//        Log.i("TAG", "vid send: " + securityDevice.getVidDevice());
         NodeInfo nodeInfo = securityDevice.getNodeInfo();
-        MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(nodeInfo.deviceUUID), nodeInfo.macAddress,
+        Log.i("TAG", "reverse MAC: " + reverseMac(nodeInfo.macAddress));
+        MqttService.getInstance().sendBindedDeviceInfo(Arrays.bytesToHexString(nodeInfo.deviceUUID), reverseMac(nodeInfo.macAddress).toLowerCase(),
                 Arrays.bytesToHexString(nodeInfo.deviceKey), securityDevice.getVidDevice(),
                 nodeInfo.pid, nodeInfo.meshAddress);
     }
@@ -200,9 +201,7 @@ public class FastProvisionController {
             throw new IllegalArgumentException("n is larger than the length of the input array");
         }
 
-        for (int i = 0; i < n; i++) {
-            outputArray[i] = inputArray[length - n + i];
-        }
+        System.arraycopy(inputArray, length - n, outputArray, 0, n);
 
         return outputArray;
     }
@@ -210,9 +209,12 @@ public class FastProvisionController {
     public static byte[] getArrayElements(byte[] array, int startIndex, int endIndex) {
         int length = endIndex - startIndex + 1;
         byte[] result = new byte[length];
-        for (int i = 0; i < length; i++) {
-            result[i] = array[startIndex + i];
-        }
+        System.arraycopy(array, startIndex, result, 0, length);
         return result;
+    }
+    public static String reverseMac(String mac) {
+        byte[] byteArrayMac = Arrays.hexToBytes(mac.replace(":",""));
+        byte[] byteArrayMacReversed = Arrays.reverse(byteArrayMac);
+        return Arrays.bytesToHexString(byteArrayMacReversed);
     }
 }
