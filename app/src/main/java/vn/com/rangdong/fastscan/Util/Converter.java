@@ -57,4 +57,15 @@ public class Converter {
         return result;
     }
 
+    public static int convertToThreeBytes(int number) {
+        int A = number / 10000;
+        int B = (number / 1000) % 10;
+        int C = number % 1000;
+
+        int byte1 = ((A & 0x0F) << 4) | (B & 0x0F);
+        int rs = ((byte1 & 0xFF) <<8 )| (C & 0xFF);
+
+        return rs;
+    }
+
 }

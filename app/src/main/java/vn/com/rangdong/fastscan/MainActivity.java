@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
         MeshLogger.log("main auto connect");
         MeshInfo meshInfo = TelinkMeshApplication.getInstance().getMeshInfo();
         Log.i("TAG", "nodes size: " + meshInfo.nodes.size());
-        if (meshInfo.nodes.size() == 0) {
+        if (meshInfo.nodes.isEmpty()) {
             MeshService.getInstance().idle(true);
         } else {
             int directAdr = MeshService.getInstance().getDirectConnectedNodeAddress();
