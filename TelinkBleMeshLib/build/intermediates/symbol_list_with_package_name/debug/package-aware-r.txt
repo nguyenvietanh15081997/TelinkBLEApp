@@ -1,2 +1,3 @@
 com.example.telinkblemeshlib
 string app_name
+string app_version

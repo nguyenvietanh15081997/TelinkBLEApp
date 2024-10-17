@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 
+import vn.com.rangdong.fastscan.Message.SecurityMessage;
 import vn.com.rangdong.fastscan.R;
 
 import vn.com.rangdong.fastscan.Util.Converter;
@@ -21,11 +22,14 @@ import vn.com.rangdong.fastscan.Service.MyBleService;
 import vn.com.rangdong.fastscan.model.AppSettings;
 import vn.com.rangdong.fastscan.model.MeshInfo;
 import vn.com.rangdong.fastscan.model.NodeInfo;
+
+import com.telink.ble.mesh.core.Encipher;
 import com.telink.ble.mesh.foundation.MeshService;
 import com.telink.ble.mesh.foundation.parameter.AutoConnectParameters;
 import com.telink.ble.mesh.util.Arrays;
 import com.telink.ble.mesh.util.MeshLogger;
 
+import java.util.Base64;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -82,7 +86,18 @@ public class MainActivity extends AppCompatActivity {
             MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfiguration());
         });
         btnProvision.setOnClickListener(v -> {
-//            Log.i(TAG, "onCreate: " + Arrays.bytesToHexString([0x]));
+            String macAddress = "32:3c:dc:89:1e:b2";
+            String RD_KEY = "RANGDONGRALSMART";
+            Log.i(TAG, "payload: " + base64ToHex("2804"+macAddress.replace(":","")));
+            Log.i(TAG, "key: " + base64ToHex(RD_KEY));
+            String cleanedMac = macAddress.replaceAll(":", "");
+            byte[] adr = Arrays.hexToBytes(base64ToHex("2804"+macAddress.replace(":","")));
+            Log.i(TAG, "adr: " + java.util.Arrays.toString(adr));
+//            byte[] dataPrefixes = Arrays.hexToBytes(UNENCRYPTED_DATA_PREFIXES);
+//            byte[] data = concatenateArrays(dataPrefixes, concatenateArrays(Arrays.reverse(adr), unicast));
+            byte[] key = Arrays.hexToBytes(base64ToHex(RD_KEY));
+            byte[] re = Encipher.aes(adr, key);
+            Log.i(TAG, "re: " + Arrays.bytesToHexString(re));
         });
     }
 
@@ -116,5 +131,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+    }
+
+    public  String base64ToHex(String base64) {
+        byte[] bytes = new byte[0];
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            bytes = Base64.getDecoder().decode(base64);
+        }
+        StringBuilder hex = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) {
+            hex.append(String.format("%02x", b));
+        }
+        return hex.toString();
     }
 }

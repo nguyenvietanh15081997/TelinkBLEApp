@@ -162,7 +162,12 @@ public final class Arrays {
         byte[] result = new byte[length];
 
         for (int i = 0; i < length; i++) {
-            result[i] = (byte) Integer.parseInt(hexStr.substring(i * 2, i * 2 + 2), 16);
+            try {
+                result[i] = (byte) Integer.parseInt(hexStr.substring(i * 2, i * 2 + 2), 16);
+
+            } catch (Exception e){
+                e.printStackTrace();
+            }
         }
 
         return result;

@@ -27,6 +27,7 @@ import vn.com.rangdong.fastscan.model.SecurityDevice;
 import vn.com.rangdong.fastscan.model.SharedPreferenceHelper;
 import vn.com.rangdong.fastscan.model.UnitConvert;
 
+import com.telink.ble.mesh.core.Encipher;
 import com.telink.ble.mesh.core.MeshUtils;
 import com.telink.ble.mesh.core.message.NotificationMessage;
 import com.telink.ble.mesh.core.message.config.ModelPublicationStatusMessage;
@@ -60,6 +61,7 @@ public class MyBleService extends Service implements EventListener<String> {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "start MyBleService");
+
         context = this;
 
         fastProvisionController = new FastProvisionController();
@@ -95,7 +97,11 @@ public class MyBleService extends Service implements EventListener<String> {
         TelinkMeshApplication.getInstance().addEventListener(StatusNotificationEvent.EVENT_TYPE_NOTIFICATION_MESSAGE_UNKNOWN, this);
 
 //        //connect mqtt
-        MqttService.getInstance().connect(getApplicationContext());
+        try {
+            MqttService.getInstance().connect(getApplicationContext());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         mesh = TelinkMeshApplication.getInstance().getMeshInfo();
         startMeshService();
