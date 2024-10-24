@@ -9,6 +9,7 @@ import vn.com.rangdong.fastscan.MainActivity;
 import vn.com.rangdong.fastscan.Service.MqttService;
 import vn.com.rangdong.fastscan.TelinkMeshApplication;
 import vn.com.rangdong.fastscan.Util.Converter;
+import vn.com.rangdong.fastscan.model.FUCacheService;
 import vn.com.rangdong.fastscan.model.NetworkingState;
 import vn.com.rangdong.fastscan.Message.SecurityMessage;
 import vn.com.rangdong.fastscan.model.MeshInfo;
@@ -116,8 +117,16 @@ public class FastProvisionController {
             MainActivity.autoConnect();
             meshInfo.saveOrUpdate(TelinkMeshApplication.getInstance());
         }
-        MqttService.getInstance().callProvisionNormal();
+
         Log.i("TAG", "-- number of device ---: " + TelinkMeshApplication.getInstance().getMeshInfo().nodes.size());
+        if (TelinkMeshApplication.getInstance().getMeshInfo().nodes.size() == 0) {
+            MeshService.getInstance().idle(true);
+            MeshInfo meshInfo = TelinkMeshApplication.getInstance().createNewMesh();
+            TelinkMeshApplication.getInstance().setupMesh(meshInfo);
+            MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfiguration());
+        }
+
+        MqttService.getInstance().callProvisionNormal();
 //        MainActivity.resetUI();
     }
 

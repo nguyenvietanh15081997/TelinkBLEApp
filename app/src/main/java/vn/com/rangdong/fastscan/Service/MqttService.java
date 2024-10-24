@@ -223,6 +223,10 @@ public class MqttService {
 
     void handleStopScan(){
         MeshService.getInstance().stopScan();
+        MeshService.getInstance().idle(true);
+        MeshInfo meshInfo = TelinkMeshApplication.getInstance().createNewMesh();
+        TelinkMeshApplication.getInstance().setupMesh(meshInfo);
+        MeshService.getInstance().setupMeshNetwork(meshInfo.convertToConfiguration());
     }
     public void callProvisionNormal() {
         JSONObject msgProvisionNormal = new JSONObject();
